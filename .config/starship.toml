@@ -1,0 +1,63 @@
+# ~/.config/starship.toml
+#
+# Colors set in the starship_colors funcion.
+# coldblue="33"
+# smoothblue="111"
+# iceblue="45"
+# turqoise="50"
+# smoothgreen="42"
+# darkpurple="55"
+# grapefruit="09"
+
+format = """
+[┌─\\(](55)$directory$git_branch$git_status[\\)](55) $cmd_duration$fill[\\(](55)$username$hostname[\\)](55)
+[└─\\[](55)$time[\\]-](55)$character"""
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+[character]
+success_symbol = "[>](55)"
+error_symbol = "[>](red)"
+vicmd_symbol = "[<](green)"
+
+[cmd_duration]
+min_time = 500
+format = "[$duration](42)"
+
+[directory]
+style = "125"
+format = "[$path]($style)[$read_only]($read_only_style)"
+disabled = false
+
+[fill]
+symbol =" "
+
+[git_branch]
+format = " [$symbol$branch]($style) "
+
+[git_status]
+format = '([$all_status$ahead_behind]($style))'
+
+[hostname]
+ssh_only = false
+style = "111"
+format = "@[$hostname]($style)"
+disabled = false
+
+# Disable the package module, hiding it from the prompt completey
+[package]
+diabled = true
+
+[time]
+use_12hr = true
+style = "42"
+format = "[$time]($style)"
+disabled = false
+
+[username]
+style_user = "125"
+style_root = "black bold"
+format = "[$user]($style)"
+disabled = false
+show_always = true
