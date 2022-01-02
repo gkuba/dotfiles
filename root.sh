@@ -1,4 +1,4 @@
-#! /bin/#!/usr/bin/env bash
+#! /bin/bash
 
 ### TO DO: ###
 # Get this all converted and put in a ansible playbook.
