@@ -39,7 +39,7 @@ if ! [ ${#EXISTING_DOTFILES[@]} -eq 0 ]; then
   done
 fi
 
-config checkout
+config checkout -f
 
 # VIM SETUP
 mkdir -p ~/.vim/autoload ~/.vim/bundle
