@@ -3,7 +3,7 @@
 
 ### We are using git bear repos to keep things clean.
 ___
-Initial setup:
+First time setup: - Only used once.
 ```bash
 #Create your repo directory
 git init --bare $HOME/dotfiles
@@ -26,7 +26,7 @@ config push
 ```
 ___
 
-Cloning on another machine:
+Cloning on another machine: - Every other time you setup.
 ```bash
 # Create your repo directory
 mkdir -p $HOME/dotfiles
