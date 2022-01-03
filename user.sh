@@ -50,3 +50,6 @@ git clone https://github.com/vim-airline/vim-airline-themes ~/.vim/bundle/vim-ai
 git clone https://github.com/gosukiwi/vim-atom-dark.git ~/.vim/bundle/vim-atom-dark.vim
 git clone https://github.com/trusktr/seti.vim ~/.vim/bundle/seti.vim
 fc-cache -vf ~/.fonts/
+mkdir -p $HOME/.vim/colors
+cp $HOME/.vim/bundle/vim-atom-dark.vim/colors/atom-dark-256.vim $HOME/.vim/colors/
+cp $HOME/.vim/bundle/seti.vim/colors/seti.vim $HOME/.vim/colors/
