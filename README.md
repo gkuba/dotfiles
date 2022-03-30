@@ -41,6 +41,12 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ```
+Or you can run the following commands:
+```bash
+curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/root.sh |bash
+curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/user.sh |bash
+```
+
 ---
 
 The files below install the needed apps and clones the various repos needed for vim and the starship prompt.
