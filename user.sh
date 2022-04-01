@@ -18,7 +18,7 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ## Variables
-DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".vimrc")
+DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".vimrc" ".vim/bundle/vim-airline" ".vim/bundle/vim-fugitive" ".vim/bundle/vim-airline-themes" ".vim/bundle/vim-atom-dark.vim" ".vim/bundle/seti.vim")
 EXISTING_DOTFILES=()
 BACKUPDIR=".backup_dotfiles"
 
@@ -30,12 +30,12 @@ for file in ${DOTFILES[@]}; do
 done
 
 if ! [ ${#EXISTING_DOTFILES[@]} -eq 0 ]; then
-#  echo -e "\n$yellow\s\s[INFO]$white dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$BACKUPDIR\"$white"
-    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
-#  mkdir -p $HOME/$BACKUPDIR
+    echo -e "\n$yellow\s\s[INFO]$white dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$BACKUPDIR\"$white"
+#    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
+    mkdir -p $HOME/$BACKUPDIR
   for file in ${EXISTING_DOTFILES[@]}; do
-#    mv $HOME/$file $HOME/$BACKUPDIR/
-    rm -f $HOME/$file
+    mv $HOME/$file $HOME/$BACKUPDIR/
+#    rm -f $HOME/$file
   done
 fi
 
