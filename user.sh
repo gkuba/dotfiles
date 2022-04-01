@@ -22,8 +22,6 @@ DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".
 VIMDOTFILES=("vim-airline" "vim-fugitive" "vim-airline-themes" "vim-atom-dark.vim" "seti.vim")
 EXISTING_DOTFILES=()
 EXISTING_VIMDOTFILES=()
-BACKUPDIR=".backup_dotfiles"
-VIM_BACKUPDIR="$BACKUPDIR/.vim/bundle/"
 
 ## Checking if the specified dotfiles exist if so making a backup directory and moving them there.
 for file in ${DOTFILES[@]}; do
@@ -33,12 +31,9 @@ for file in ${DOTFILES[@]}; do
 done
 
 if ! [ ${#EXISTING_DOTFILES[@]} -eq 0 ]; then
-    echo -e "\n$yellow  [INFO]$white dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$BACKUPDIR\"$white"
-#    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
-    mkdir -p $HOME/$BACKUPDIR
+    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
   for file in ${EXISTING_DOTFILES[@]}; do
-    mv $HOME/$file $HOME/$BACKUPDIR/
-#    rm -f $HOME/$file
+    rm -f $HOME/$file
   done
 fi
 
@@ -50,12 +45,9 @@ for file in ${VIMDOTFILES[@]}; do
 done
 
 if ! [ ${#EXISTING_VIMDOTFILES[@]} -eq 0 ]; then
-    echo -e "\n$yellow  [INFO]$white vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$VIM_BACKUPDIR\"$white"
-#    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
-    mkdir -p $HOME/$VIM_BACKUPDIR
+    echo -e "\n$yellow  [INFO]$white Removing vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory."
   for file in ${EXISTING_DOTFILES[@]}; do
-    mv $HOME/$file $HOME/$VIM_BACKUPDIR
-#    rm -f $HOME/$file
+    rm -f $HOME/.vim/bundle/$file
   done
 fi
 
