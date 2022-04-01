@@ -13,7 +13,10 @@ green="\033[0;38;5;2m"
 white="\033[0;38;5;7m"
 yellow="\033[0;38;5;3m"
 
-mkdir -p $HOME/dotfiles
+if ! [ -e $HOME/dotfiles ]; then
+   mkdir -p $HOME/dotfiles
+fi
+
 git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
@@ -47,7 +50,7 @@ done
 if ! [ ${#EXISTING_VIMDOTFILES[@]} -eq 0 ]; then
     echo -e "\n$yellow  [INFO]$white Removing vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory."
   for file in ${EXISTING_DOTFILES[@]}; do
-    rm -rf $HOME/.vim/bundle
+    rm -rf $HOME/.vim/bundle/$file
   done
 fi
 
