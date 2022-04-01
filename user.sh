@@ -47,7 +47,7 @@ done
 if ! [ ${#EXISTING_VIMDOTFILES[@]} -eq 0 ]; then
     echo -e "\n$yellow  [INFO]$white Removing vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory."
   for file in ${EXISTING_DOTFILES[@]}; do
-    rm -rf $HOME/.vim/bundle/$file
+    rm -rf $HOME/.vim/bundle/$file/
   done
 fi
 
