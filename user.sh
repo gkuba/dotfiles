@@ -15,9 +15,9 @@ yellow="\033[0;38;5;3m"
 
 if ! [ -e $HOME/dotfiles ]; then
    mkdir -p $HOME/dotfiles
+   git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 fi
 
-git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ## Variables
