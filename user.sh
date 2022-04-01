@@ -18,9 +18,12 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ## Variables
-DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".vimrc" ".vim/bundle/vim-airline" ".vim/bundle/vim-fugitive" ".vim/bundle/vim-airline-themes" ".vim/bundle/vim-atom-dark.vim" ".vim/bundle/seti.vim")
+DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".vimrc")
+VIMDOTFILES=("vim-airline" "vim-fugitive" "vim-airline-themes" "vim-atom-dark.vim" "seti.vim")
 EXISTING_DOTFILES=()
+EXISTING_VIMDOTFILES=()
 BACKUPDIR=".backup_dotfiles"
+VIM_BACKUPDIR="$BACKUPDIR/.vim/bundles/"
 
 ## Checking if the specified dotfiles exist if so making a backup directory and moving them there.
 for file in ${DOTFILES[@]}; do
@@ -30,11 +33,28 @@ for file in ${DOTFILES[@]}; do
 done
 
 if ! [ ${#EXISTING_DOTFILES[@]} -eq 0 ]; then
-    echo -e "\n$yellow\s\s[INFO]$white dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$BACKUPDIR\"$white"
+    echo -e "\n$yellow  [INFO]$white dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$BACKUPDIR\"$white"
 #    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
     mkdir -p $HOME/$BACKUPDIR
   for file in ${EXISTING_DOTFILES[@]}; do
     mv $HOME/$file $HOME/$BACKUPDIR/
+#    rm -f $HOME/$file
+  done
+fi
+
+## Checking if the specified vim dotfiles exist if so adding them to the backup directory.
+for file in ${VIMDOTFILES[@]}; do
+  if [ -f $HOME/.vim/bundles/$file ]; then
+   EXISTING_VIMDOTFILES+=( $file )
+  fi
+done
+
+if ! [ ${#EXISTING_VIMDOTFILES[@]} -eq 0 ]; then
+    echo -e "\n$yellow  [INFO]$white vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory backing up to $green\"$HOME/$VIM_BACKUPDIR/\"$white"
+#    echo -e "\n$yellow  [INFO]$white Removing dotfiles $green\"${EXISTING_DOTFILES[*]}\"$white found in home directory."
+    mkdir -p $HOME/$VIM_BACKUPDIR
+  for file in ${EXISTING_DOTFILES[@]}; do
+    mv $HOME/$file $HOME/$VIM_BACKUPDIR/
 #    rm -f $HOME/$file
   done
 fi
