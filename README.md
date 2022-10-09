@@ -41,12 +41,12 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ```
-Or you can run the following commands:
+Or you can run the following command:
 ```bash
 curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh |bash
 ```
 
 ---
 
-The files below install the needed apps and clones the various repos needed for vim and the starship prompt.
+The file below install the needed apps and clones the various repos needed for vim and the starship prompt.
 - ```dotfile_user.sh``` - Runs as the user.
