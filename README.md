@@ -43,12 +43,10 @@ config config --local status.showUntrackedFiles no
 ```
 Or you can run the following commands:
 ```bash
-curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/root.sh |bash
-curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/user.sh |bash
+curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh |bash
 ```
 
 ---
 
 The files below install the needed apps and clones the various repos needed for vim and the starship prompt.
-- ```root.sh``` - This needs to be run with sudo as it installs the packages. Currently set up for Ubuntu.
-- ```user.sh``` - Runs as the user.
+- ```dotfile_user.sh``` - Runs as the user.

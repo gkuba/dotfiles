@@ -68,3 +68,6 @@ fc-cache -vf ~/.fonts/
 mkdir -p $HOME/.vim/colors
 cp $HOME/.vim/bundle/vim-atom-dark.vim/colors/atom-dark-256.vim $HOME/.vim/colors/
 cp $HOME/.vim/bundle/seti.vim/colors/seti.vim $HOME/.vim/colors/
+
+# Install starship
+sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
