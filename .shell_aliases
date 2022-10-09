@@ -27,6 +27,7 @@ alias cp='cp -iv'
 ## Sudo commands
 alias yum='sudo yum --color=auto'
 alias apt='sudo apt'
+alias nala='sudo nala'
 alias service='sudo service'
 
 ## Fixing tmux colors
