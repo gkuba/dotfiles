@@ -1,6 +1,5 @@
 ## If not running interactively, don't do anything
 [[ $- != *i* ]] && return
-#[ -n "$TMUX" ] && export TERM=xterm
 ##-------------------------------------------------------------
 ## Some Settings
 ##-------------------------------------------------------------
@@ -34,7 +33,7 @@ shopt -s no_empty_cmd_completion	# do not attempt to auto complete empty command
 #unset MAILCHECK
 
 ##-------------------------------------------------------------
-## Greeting, motd etc...
+## Sourced files.
 ##-------------------------------------------------------------
 
 ## Source ~/.bash_colors for both bash and zsh
@@ -42,10 +41,30 @@ if [ -f ~/.shell_colors ]; then
     . ~/.shell_colors
 fi
 
+## Source ~/.shell_bash_functions for both bash and zsh
+if [ -f ~/.shell_functions ]; then
+    . ~/.shell_functions
+fi
+
+## Source ~/.shell_aliases for both bash and zsh
+if [ -f ~/.shell_aliases ]; then
+    . ~/.shell_aliases
+fi
+
+## Source ~/.shell_enviroment for both bash and zsh
+if [ -f ~/.shell_enviroment ]; then
+    . ~/.shell_enviroment
+fi
+
+## Enable programmable completion features.
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+    . /etc/bash_completion
+fi
+
 ##-------------------------------------------------------------
 ## Shell Prompt
 ##-------------------------------------------------------------
-
+## Old prompt here for reuse later. 
 # function pre_prompt {
 # newPWD="${PWD}"
 # user=$(whoami)
@@ -84,23 +103,3 @@ fi
 
 ## Starship Command Prompt
 eval "$(starship init bash)"
-
-## Source ~/.shell_bash_functions for both bash and zsh
-if [ -f ~/.shell_functions ]; then
-    . ~/.shell_functions
-fi
-
-## Source ~/.shell_aliases for both bash and zsh
-if [ -f ~/.shell_aliases ]; then
-    . ~/.shell_aliases
-fi
-
-## Source ~/.shell_enviroment for both bash and zsh
-if [ -f ~/.shell_enviroment ]; then
-    . ~/.shell_enviroment
-fi
-
-## Enable programmable completion features.
-if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
-    . /etc/bash_completion
-fi
