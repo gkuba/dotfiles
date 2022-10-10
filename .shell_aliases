@@ -26,7 +26,7 @@ alias cp='cp -iv'
 
 ## Sudo commands
 alias yum='sudo yum --color=auto'
-alias apt='sudo apt'
+alias apt='nala'
 alias nala='sudo nala'
 alias service='sudo service'
 
