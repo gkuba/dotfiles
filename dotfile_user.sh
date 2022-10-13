@@ -1,11 +1,15 @@
 #! /bin/bash
 
 ### TO DO: ###
-# Get this all converted and put in a ansible playbook.
+# See about adding a starship theme set of options with examples.
 
 ## Sets up the git config alias for use before dot files are pulled down.
 function config {
    /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME $@
+}
+
+function getConfig {
+  curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$HOSTNAME-starship.toml -o .config/starship.toml
 }
 
 ## Defining colors for our text output
@@ -71,3 +75,8 @@ cp $HOME/.vim/bundle/seti.vim/colors/seti.vim $HOME/.vim/colors/
 
 # Install starship
 sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
+
+# If hostname matches one below automatically grab starship theme and replace default.
+if [ $HOSTNAME = "pixel" ]; then
+  getConfig
+fi
