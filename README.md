@@ -1,9 +1,11 @@
-## My ___dotfiles___
+# My ___dotfiles___
 
+## We are using git bear repos to keep things clean
 
-### We are using git bear repos to keep things clean.
 ___
+
 First time setup: - Only used once.
+
 ```bash
 #Create your repo directory
 git init --bare $HOME/dotfiles
@@ -19,14 +21,17 @@ config config --local status.showUntrackedFiles no
 ```
 
 Basic usage example:
+
 ```bash
 config add /path/to/file
 config commit -m "A short message"
 config push
 ```
+
 ___
 
 Cloning on another machine: - Every other time you setup.
+
 ```bash
 # Create your repo directory
 mkdir -p $HOME/dotfiles
@@ -41,12 +46,15 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 config config --local status.showUntrackedFiles no
 
 ```
+
 Or you can run the following command:
+
 ```bash
 curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh |bash
 ```
 
----
+___
 
 The file below install the needed apps and clones the various repos needed for vim and the starship prompt.
+
 - ```dotfile_user.sh``` - Runs as the user.
