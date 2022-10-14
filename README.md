@@ -18,7 +18,7 @@ If you would like to set this up for yourself follow the __First Time Setup__ or
 
 We are using git bear repos to keep things clean
 
-First time setup: - Only used once.
+First Time Setup: - Only used once.
 
 ```bash
 #Create your repo directory
@@ -58,6 +58,9 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 # Checkout the files for the first time. Can't use config as the alias isn't currently set. 
 # NOTE: this will fail if you have any of the same files in your home dir such as a .bashrc.
 /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME checkout
+
+# Restart your terminal session or rerun your shell of choice.
+bash
 
 # Set the config options.
 config config --local status.showUntrackedFiles no
