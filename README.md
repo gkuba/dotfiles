@@ -1,8 +1,22 @@
 # My ___dotfiles___
 
-## We are using git bear repos to keep things clean
+## Installation Info
+
+Just copy and paste in your terminal.
+
+```bash
+curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh |bash
+```
 
 ___
+
+## Manual Installation and First Time Setup
+
+If you would like to set this up for yourself follow the __First Time Setup__ or if you would like to manually set this up to get a better understanding follow the __Manual Installaion__ section.
+
+### First Time Setup
+
+We are using git bear repos to keep things clean
 
 First time setup: - Only used once.
 
@@ -30,6 +44,8 @@ config push
 
 ___
 
+### Manual Installation
+
 Cloning on another machine: - Every other time you setup.
 
 ```bash
@@ -47,14 +63,6 @@ config config --local status.showUntrackedFiles no
 
 ```
 
-Or you can run the following command:
-
-```bash
-curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh |bash
-```
-
-___
-
-The file below install the needed apps and clones the various repos needed for vim and the starship prompt.
+Run ```bash dotfile_user.sh``` to install the needed apps and clones the various repos needed for vim and the starship prompt.
 
 - ```dotfile_user.sh``` - Runs as the user.
