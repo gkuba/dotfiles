@@ -55,7 +55,8 @@ mkdir -p $HOME/dotfiles
 # Clone the repository
 git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 
-# Checkout the files for the first time. Can't use config as the alias isn't currently set. NOTE: this will fail if you have any of the same files in your home dir such as a .bashrc.
+# Checkout the files for the first time. Can't use config as the alias isn't currently set. 
+# NOTE: this will fail if you have any of the same files in your home dir such as a .bashrc.
 /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME checkout
 
 # Set the config options.
