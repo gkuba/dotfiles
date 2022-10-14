@@ -1,5 +1,9 @@
 # My ___dotfiles___
 
+You can get other theme styles here: [gkuba/Starship-Config][gkuba/Starship-Config]
+
+[gkuba/Starship-Config]: https://github.com/gkuba/Starship-Configs
+
 ## Installation Info
 
 Just copy and paste in your terminal.
