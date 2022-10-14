@@ -1,6 +1,6 @@
 # My ___dotfiles___
 
-You can get other theme styles here: [gkuba/Starship-Config][gkuba/Starship-Config]
+You can get my other themes/styles for the Starship prompt here: [gkuba/Starship-Config][gkuba/Starship-Config]
 
 [gkuba/Starship-Config]: https://github.com/gkuba/Starship-Configs
 
