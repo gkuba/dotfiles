@@ -64,6 +64,6 @@ config config --local status.showUntrackedFiles no
 
 ```
 
-Run ```dotfile_user.sh``` as your user to install the needed apps and clone the various repos needed for vim and the Starship prompt.
+Run ```./dotfile_user.sh``` as your user to install the needed apps and clone the various repos needed for vim and the Starship prompt.
 
 __NOTE:__ You may have to make ```dotfile_user.sh``` executable which can be done with ```chmod +x dotfile_user.sh```
