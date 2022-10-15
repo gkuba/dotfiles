@@ -9,7 +9,7 @@ function config {
 }
 
 function getConfig {
-  curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$HOSTNAME-starship.toml -o .config/starship.toml
+  curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$@-starship.toml -o .config/starship.toml
 }
 
 ## Defining colors for our text output
@@ -78,5 +78,9 @@ sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
 
 # If hostname matches one below automatically grab starship theme and replace default.
 if [ $HOSTNAME = "pixel" ]; then
-  getConfig
+  getConfig pixel
+fi
+
+if [[ $HOSTNAME = *"pi"* ]]; then
+  getConfig pi
 fi
