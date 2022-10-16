@@ -2,7 +2,23 @@
 ## Color Variables
 ##-------------------------------------------------------------
 
-## Define some color variables for use in our bash and zsh prompts
+## Defind some basic colors for use in functions
+# Normal
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+BLUE="\033[34m"
+MAGENTA="\033[35m"
+ENDCOLOR="\033[0m"
+
+# Italic
+ITALICRED="\033[3;31m"
+ITALICGREEN="\033[3;32m"
+ITALICYELLOW="\033[3;33m"
+ITALICBLUE="\033[3;34m"
+ITALICMAGENTA="\033[3;35m"
+
+## Old Color Codes
 black="\[\033[0;38;5;0m\]"
 red="\[\033[0;38;5;1m\]"
 orange="\[\033[0;38;5;130m\]"
