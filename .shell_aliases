@@ -32,9 +32,9 @@ if [ "$(isPresent apt)" = 1 ] && [ "$(isPresent nala)" = 1 ]; then
     alias apt='nala'
     alias nala='sudo nala'
 
-elif [ "$(isPresent apt)" = 1 ]; then
+elif [ "$(isPresent apt-get)" = 1 ]; then
 
-    alias apt='sudo apt'
+    alias apt='sudo apt-get'
 fi
 
 if [ "$(isPresent yum)" = 1 ]; then
