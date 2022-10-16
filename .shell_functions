@@ -91,11 +91,11 @@ netinfo() {
 		MAC_ADDRESS="$(/usr/sbin/ip -4 link show $i | awk /'link/ {print $2}')"
 
 		echo
-		echo "--------------- Network Information ---------------"
+		echo "--- Network Information ----"
 		echo -e "Device :  "$i
 		echo -e "Address:  "$IP_ADDRESS
 		echo -e "MACAddr:  "$MAC_ADDRESS
-		echo "---------------------------------------------------"
+		echo "----------------------------"
 	done
 }
 
