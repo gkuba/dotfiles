@@ -38,6 +38,16 @@ zstyle ':completion:*' verbose true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
+## Source ~/.shell_colors for both bash and zsh
+if [ -f ~/.shell_colors ]; then
+    . ~/.shell_colors
+fi
+
+## Source ~/.shell_enviroment for both bash and zsh
+if [ -f ~/.shell_enviroment ]; then
+    . ~/.shell_enviroment
+fi
+
 ## Source ~/.shell_functions for both bash and zsh
 if [ -f ~/.shell_functions ] ; then
     . ~/.shell_functions
@@ -46,14 +56,4 @@ fi
 ## Source ~/.shell_aliases for both bash and zsh
 if [ -f ~/.shell_aliases ]; then
     . ~/.shell_aliases
-fi
-
-## Source ~/.shell_enviroment for both bash and zsh
-if [ -f ~/.shell_enviroment ]; then
-    . ~/.shell_enviroment
-fi
-
-## Source ~/.shell_colors for both bash and zsh
-if [ -f ~/.shell_colors ]; then
-    . ~/.shell_colors
 fi

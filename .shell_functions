@@ -1,24 +1,24 @@
 ##-------------------------------------------------------------
-## Useful functions
+## Functions
 ##-------------------------------------------------------------
 
-# Extracts any archive(s) (if unp isn't installed)
-extract () {
+## Extracts any archive(s) (if unp isn't installed)
+extract() {
 	for archive in $*; do
-		if [ -f $archive ] ; then
+		if [ -f $archive ]; then
 			case $archive in
-				*.tar.bz2)   tar xvjf $archive    ;;
-				*.tar.gz)    tar xvzf $archive    ;;
-				*.bz2)       bunzip2 $archive     ;;
-				*.rar)       rar x $archive       ;;
-				*.gz)        gunzip $archive      ;;
-				*.tar)       tar xvf $archive     ;;
-				*.tbz2)      tar xvjf $archive    ;;
-				*.tgz)       tar xvzf $archive    ;;
-				*.zip)       unzip $archive       ;;
-				*.Z)         uncompress $archive  ;;
-				*.7z)        7z x $archive        ;;
-				*)           echo "don't know how to extract '$archive'..." ;;
+			*.tar.bz2) tar xvjf $archive ;;
+			*.tar.gz) tar xvzf $archive ;;
+			*.bz2) bunzip2 $archive ;;
+			*.rar) rar x $archive ;;
+			*.gz) gunzip $archive ;;
+			*.tar) tar xvf $archive ;;
+			*.tbz2) tar xvjf $archive ;;
+			*.tgz) tar xvzf $archive ;;
+			*.zip) unzip $archive ;;
+			*.Z) uncompress $archive ;;
+			*.7z) 7z x $archive ;;
+			*) echo "don't know how to extract '$archive'..." ;;
 			esac
 		else
 			echo "'$archive' is not a valid file!"
@@ -26,9 +26,8 @@ extract () {
 	done
 }
 
-# Searches for text in all files in the current folder
-ftext ()
-{
+## Searches for text in all files in the current folder
+ftext() {
 	# -i case-insensitive
 	# -I ignore binary files
 	# -H causes filename to be printed
@@ -39,42 +38,37 @@ ftext ()
 	grep -iIHrn --color=always "$1" . | less -r
 }
 
-# Copy and go to the directory
-cpg ()
-{
-	if [ -d "$2" ];then
+## Copy and go to the directory
+cpg() {
+	if [ -d "$2" ]; then
 		cp $1 $2 && cd $2
 	else
 		cp $1 $2
 	fi
 }
 
-# Move and go to the directory
-mvg ()
-{
-	if [ -d "$2" ];then
+## Move and go to the directory
+mvg() {
+	if [ -d "$2" ]; then
 		mv $1 $2 && cd $2
 	else
 		mv $1 $2
 	fi
 }
 
-# Create and go to the directory
-mkdirg ()
-{
+## Create and go to the directory
+mkdirg() {
 	mkdir -p $1
 	cd $1
 }
 
-# Goes up a specified number of directories  (i.e. up 4)
-up ()
-{
+## Goes up a specified number of directories  (i.e. up 4)
+up() {
 	local d=""
 	limit=$1
-	for ((i=1 ; i <= limit ; i++))
-		do
-			d=$d/..
-		done
+	for ((i = 1; i <= limit; i++)); do
+		d=$d/..
+	done
 	d=$(echo $d | sed 's/^\///')
 	if [ -z "$d" ]; then
 		d=..
@@ -82,30 +76,57 @@ up ()
 	cd $d
 }
 
-# Show current network information
-netinfo ()
-{
-	echo "--------------- Network Information ---------------"
-	/sbin/ifconfig | awk /'inet addr/ {print $2}'
-	echo ""
-	/sbin/ifconfig | awk /'Bcast/ {print $3}'
-	echo ""
-	/sbin/ifconfig | awk /'inet addr/ {print $4}'
+## Show current network information
+netinfo() {
+	IP_IS_PRESENT="$(command -v ip &>/dev/null && echo 1)"
 
-	/sbin/ifconfig | awk /'HWaddr/ {print $4,$5}'
-	echo "---------------------------------------------------"
+	if [ ! "$IP_IS_PRESENT" ]; then
+		echo "The ip command isn't available in the current environment. It's missing from \$PATH"
+		exit 130
+	fi
+
+	ifNames=$(ip -j link | jq -r '.[].ifname | select(. != "lo")')
+	for i in $ifNames; do
+		IP_ADDRESS="$(/usr/sbin/ip -4 a show $i | awk /'inet/ {print $2}' | cut -d/ -f1)"
+		MAC_ADDRESS="$(/usr/sbin/ip -4 link show $i | awk /'link/ {print $2}')"
+
+		echo
+		echo "--------------- Network Information ---------------"
+		echo -e "Device :  "$i
+		echo -e "Address:  "$IP_ADDRESS
+		echo -e "MACAddr:  "$MAC_ADDRESS
+		echo "---------------------------------------------------"
+	done
 }
 
-# IP address lookup
-alias whatismyip="whatsmyip"
-function whatsmyip ()
-{
-	# Dumps a list of all IP addresses for every device
-	# /sbin/ifconfig |grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3 }';
+## IP address lookup
+whatsmyip() {
+
+	IP_IS_PRESENT="$(command -v ip &>/dev/null && echo 1)"
+	EXTERNAL_IP="$(curl -s https://ipecho.net/plain)"
+
+	if [ ! "$IP_IS_PRESENT" ]; then
+		echo "The ip command isn't available in the current environment. It's missing from \$PATH"
+		exit 130
+	fi
+
+	ifNames=$(ip -j link | jq -r '.[].ifname | select(. != "lo")')
+
+	echo
 
 	# Internal IP Lookup
-	echo -n "Internal IP: " ; /sbin/ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'
+	for i in $ifNames; do
+		IP_ADDRESS="$(/usr/sbin/ip -4 a show $i | awk /'inet/ {print $2}' | cut -d/ -f1)"
+
+		echo -e "Internal IP:\t$IP_ADDRESS\t($i)"
+	done
 
 	# External IP Lookup
-	echo -n "External IP: " ; wget http://smart-ip.net/myip -O - -q
+	echo -e "External IP:\t$EXTERNAL_IP"
+}
+
+## This is used to check if an application is installed and in $PATH by checking its version and returns 1 if present.
+## Example - isPresent apt
+isPresent() {
+	command -v "$1" &>/dev/null && echo 1
 }

@@ -5,26 +5,26 @@
 ##-------------------------------------------------------------
 
 ## Bash
-shopt -s checkhash			# bash will check hash table for command before searching path
-shopt -s checkwinsize			# update window size after each command
+shopt -s checkhash    # bash will check hash table for command before searching path
+shopt -s checkwinsize # update window size after each command
 
 ## CD
-shopt -s cdspell  			# Correct errors in directory names when using CD
+shopt -s cdspell # Correct errors in directory names when using CD
 #shopt -s cdable_vars			# Enable cd to use variable expansion
-shopt -s dirspell			# spelling correction on directory names during word completion
+shopt -s dirspell # spelling correction on directory names during word completion
 
 ## HISTORY
-HISTCONTROL=ignoredups:ignorespace  	# don't put duplicate lines in the history.
+HISTCONTROL=ignoredups:ignorespace # don't put duplicate lines in the history.
 #HISTSIZE=1000
 #HISTFILESIZE=2000
-shopt -s histappend			# append to the history file, don't overwrite it
+shopt -s histappend # append to the history file, don't overwrite it
 #shopt -s cmdhist			# save all lines of a multi-line command in the same history entry. (Default set)
 
 ## Expansion
-shopt -s dotglob			# include filenames beginning with a `.' in the results of filename expansion.
+shopt -s dotglob # include filenames beginning with a `.' in the results of filename expansion.
 #shopt -s expand_aliases		# allow expansion of bash aliases (Default set)
 #shopt -s extglob			# required for programable expansion (Default set)
-shopt -s no_empty_cmd_completion	# do not attempt to auto complete empty command line
+shopt -s no_empty_cmd_completion # do not attempt to auto complete empty command line
 #shopt -s nocaseglob			# match as case insensitive when expanding file names
 #shopt -s nocasematch			# matches patterns as case-insensitive matching while executing case or [[ conditional commands.
 
@@ -41,6 +41,11 @@ if [ -f ~/.shell_colors ]; then
     . ~/.shell_colors
 fi
 
+## Source ~/.shell_enviroment for both bash and zsh
+if [ -f ~/.shell_enviroment ]; then
+    . ~/.shell_enviroment
+fi
+
 ## Source ~/.shell_bash_functions for both bash and zsh
 if [ -f ~/.shell_functions ]; then
     . ~/.shell_functions
@@ -51,11 +56,6 @@ if [ -f ~/.shell_aliases ]; then
     . ~/.shell_aliases
 fi
 
-## Source ~/.shell_enviroment for both bash and zsh
-if [ -f ~/.shell_enviroment ]; then
-    . ~/.shell_enviroment
-fi
-
 ## Enable programmable completion features.
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
@@ -64,7 +64,7 @@ fi
 ##-------------------------------------------------------------
 ## Shell Prompt
 ##-------------------------------------------------------------
-## Old prompt here for reuse later. 
+## Old prompt here for reuse later.
 # function pre_prompt {
 # newPWD="${PWD}"
 # user=$(whoami)

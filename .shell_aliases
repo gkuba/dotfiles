@@ -2,7 +2,7 @@
 ## Aliases
 ##-------------------------------------------------------------
 
-# enable color support of ls and also add handy aliases
+## enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
@@ -14,7 +14,7 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
-# some more ls aliases
+## some more ls aliases
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
@@ -25,13 +25,24 @@ alias rm='rm -Iv'
 alias cp='cp -iv'
 
 ## Sudo commands
-alias yum='sudo yum --color=auto'
-alias apt='nala'
-alias nala='sudo nala'
 alias service='sudo service'
 
-## Fixing tmux colors
-alias tmux='tmux -2'
+if [ "$(isPresent apt)" = 1 ] && [ "$(isPresent nala)" = 1 ]; then
+
+    alias apt='nala'
+    alias nala='sudo nala'
+
+elif [ "$(isPresent apt)" = 1 ]; then
+
+    alias apt='sudo apt'
+fi
+
+if [ "$(isPresent yum)" = 1 ]; then
+    alias yum='sudo yum --color=auto'
+fi
 
 ## Git alias for dot file manipulation
 alias config='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
+
+## Whatsmyip fucntion alias
+alias whatismyip="whatsmyip"

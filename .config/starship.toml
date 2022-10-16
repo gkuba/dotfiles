@@ -31,7 +31,7 @@ format = "[$path]($style)[$read_only]($read_only_style)"
 disabled = false
 
 [fill]
-symbol =" "
+symbol = " "
 
 [git_branch]
 format = " [$symbol$branch]($style) "
