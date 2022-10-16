@@ -4,19 +4,19 @@
 
 ## Defind some basic colors for use in functions
 # Normal
-RED="\033[31m"
-GREEN="\033[32m"
-YELLOW="\033[33m"
-BLUE="\033[34m"
-MAGENTA="\033[35m"
-ENDCOLOR="\033[0m"
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+ENDCOLOR="\e[0m"
 
 # Italic
-ITALICRED="\033[3;31m"
-ITALICGREEN="\033[3;32m"
-ITALICYELLOW="\033[3;33m"
-ITALICBLUE="\033[3;34m"
-ITALICMAGENTA="\033[3;35m"
+ITALICRED="\e[3;31m"
+ITALICGREEN="\e[3;32m"
+ITALICYELLOW="\e[3;33m"
+ITALICBLUE="\e[3;34m"
+ITALICMAGENTA="\e[3;35m"
 
 ## Old Color Codes
 black="\[\033[0;38;5;0m\]"
