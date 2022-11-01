@@ -1,4 +1,4 @@
-# My ___dotfiles___
+# My __dotfiles__
 
 __NOTE:__ You can get my other themes/styles for the Starship prompt here: [gkuba/Starship-Config][gkuba/Starship-Config]
 
