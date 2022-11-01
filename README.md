@@ -21,7 +21,7 @@ ___
 If you are setting this up for yourself you may want to just download or fork my repository and update line 22 of the script to your repository.
 
 ```bash
-22   git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
+git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 ```
 
 ### First Time Setup
