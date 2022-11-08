@@ -10,7 +10,8 @@ set nowrap
 set number
 
 " Set Color Scheme
-colo dracula
+packadd! dracula
+colorscheme dracula
 
 " Search down into subfolders
 " Provides tab-completion for all file-related tasks
