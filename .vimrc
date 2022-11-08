@@ -10,7 +10,7 @@ set nowrap
 set number
 
 " Set Color Scheme
-colo seti
+colo dracula
 
 " Search down into subfolders
 " Provides tab-completion for all file-related tasks
@@ -38,7 +38,7 @@ filetype plugin on
 " Sets the Pathogen args for Powerline and NERDTree
 execute pathogen#infect()
 let g:airline_powerline_fonts = 1
-let g:airline_theme = 'murmur'
+let g:airline_theme = 'deus'
 autocmd vimenter * if !argc() | NERDTree | endif
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 let NERDTreeMinimalUI=1
