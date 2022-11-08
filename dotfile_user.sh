@@ -5,11 +5,17 @@
 
 ## Sets up the git config alias for use before dot files are pulled down.
 function config {
-   /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME $@
+  /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME $@
 }
 
+## Gets starship config based on hostname. If it doesn't match a host below it will grab the default.
 function getConfig {
-  curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$@-starship.toml -o .config/starship.toml
+  if [ -z "$@" ]
+  then
+    curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/starship.toml -o .config/starship.toml
+  else
+    curl -sS https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$@-starship.toml -o .config/starship.toml
+  fi
 }
 
 ## Defining colors for our text output
@@ -18,8 +24,8 @@ white="\033[0;38;5;7m"
 yellow="\033[0;38;5;3m"
 
 if ! [ -e $HOME/dotfiles ]; then
-   mkdir -p $HOME/dotfiles
-   git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
+  mkdir -p $HOME/dotfiles
+  git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 fi
 
 config config --local status.showUntrackedFiles no
@@ -33,7 +39,7 @@ EXISTING_VIMDOTFILES=()
 ## Checking if the specified dotfiles exist if so making a backup directory and moving them there.
 for file in ${DOTFILES[@]}; do
   if [ -e $HOME/$file ]; then
-   EXISTING_DOTFILES+=( $file )
+    EXISTING_DOTFILES+=( $file )
   fi
 done
 
@@ -47,7 +53,7 @@ fi
 ## Checking if the specified vim dotfiles exist if so adding them to the backup directory.
 for file in ${VIMDOTFILES[@]}; do
   if [ -e $HOME/.vim/bundle/$file ]; then
-   EXISTING_VIMDOTFILES+=( $file )
+    EXISTING_VIMDOTFILES+=( $file )
   fi
 done
 
@@ -61,17 +67,13 @@ fi
 config checkout -f
 
 # VIM SETUP
-mkdir -p ~/.vim/autoload ~/.vim/bundle
-curl -LSso  ~/.vim/autoload/pathogen.vim https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim
-git clone https://github.com/bling/vim-airline.git ~/.vim/bundle/vim-airline
-git clone https://github.com/tpope/vim-fugitive.git ~/.vim/bundle/vim-fugitive
-git clone https://github.com/vim-airline/vim-airline-themes ~/.vim/bundle/vim-airline-themes
-git clone https://github.com/gosukiwi/vim-atom-dark.git ~/.vim/bundle/vim-atom-dark.vim
-git clone https://github.com/trusktr/seti.vim ~/.vim/bundle/seti.vim
-fc-cache -vf ~/.fonts/
-mkdir -p $HOME/.vim/colors
-cp $HOME/.vim/bundle/vim-atom-dark.vim/colors/atom-dark-256.vim $HOME/.vim/colors/
-cp $HOME/.vim/bundle/seti.vim/colors/seti.vim $HOME/.vim/colors/
+mkdir -p $HOME/.vim/autoload $HOME/.vim/bundle $HOME/.vim/pack/themes/start
+curl -LSso  $HOME/.vim/autoload/pathogen.vim https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim
+git clone https://github.com/bling/vim-airline.git $HOME/.vim/bundle/vim-airline
+git clone https://github.com/tpope/vim-fugitive.git $HOME/.vim/bundle/vim-fugitive
+git clone https://github.com/vim-airline/vim-airline-themes $HOME/.vim/bundle/vim-airline-themes
+git clone https://github.com/dracula/vim.git $HOME/.vim/pack/themes/start/dracula
+fc-cache -vf $HOME/.fonts/
 
 # Install starship
 sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
@@ -79,8 +81,8 @@ sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
 # If hostname matches one below automatically grab starship theme and replace default.
 if [ $HOSTNAME = "pixel" ]; then
   getConfig pixel
-fi
-
-if [[ $HOSTNAME = *"pi"* ]]; then
+elif [[ $HOSTNAME = *"pi"* ]]; then
   getConfig pi
+else
+  getConfig 
 fi
