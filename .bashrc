@@ -42,8 +42,8 @@ if [ -f ~/.shell_colors ]; then
 fi
 
 ## Source ~/.shell_enviroment for both bash and zsh
-if [ -f ~/.shell_enviroment ]; then
-    . ~/.shell_enviroment
+if [ -f ~/.shell_environment ]; then
+    . ~/.shell_environment
 fi
 
 ## Source ~/.shell_bash_functions for both bash and zsh
