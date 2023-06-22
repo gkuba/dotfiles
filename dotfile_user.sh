@@ -81,7 +81,7 @@ sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
 # If hostname matches one below automatically grab starship theme and replace default.
 if [ $HOSTNAME = "pixel" ]; then
   getConfig pixel
-elif [[ $HOSTNAME = *"pi"* ]]; then
+elif [[ $HOSTNAME = *"pi"* ]] || [[ $HOSTNAME = "pixelshed" ]]; then
   getConfig pi
 else
   getConfig 
