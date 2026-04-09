@@ -130,3 +130,7 @@ whatsmyip() {
 isPresent() {
 	command -v "$1" &>/dev/null && echo 1
 }
+
+dotgit() {
+  /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree="$HOME" "$@"
+}
