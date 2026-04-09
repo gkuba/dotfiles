@@ -39,6 +39,10 @@ elif [ "$(isPresent apt-get)" = 1 ]; then
     alias apt='sudo apt-get'
 fi
 
+if [ "$(isPresent pacman)" = 1 ]; then
+    alias pacman='sudo pacman'
+fi
+
 if [ "$(isPresent yum)" = 1 ]; then
     alias yum='sudo yum --color=auto'
 fi

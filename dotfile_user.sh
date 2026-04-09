@@ -31,10 +31,10 @@ fi
 config config --local status.showUntrackedFiles no
 
 ## Variables
-DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".zshrc" ".vimrc")
-VIMDOTFILES=("vim-airline" "vim-fugitive" "vim-airline-themes" "vim-atom-dark.vim" "seti.vim")
+DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".vimrc")
+NVIMDOTFILES=("init.lua")
 EXISTING_DOTFILES=()
-EXISTING_VIMDOTFILES=()
+EXISTING_NVIMDOTFILES=()
 
 ## Checking if the specified dotfiles exist if so making a backup directory and moving them there.
 for file in ${DOTFILES[@]}; do
@@ -51,28 +51,26 @@ if ! [ ${#EXISTING_DOTFILES[@]} -eq 0 ]; then
 fi
 
 ## Checking if the specified vim dotfiles exist if so adding them to the backup directory.
-for file in ${VIMDOTFILES[@]}; do
-  if [ -e $HOME/.vim/bundle/$file ]; then
+for file in ${NVIMDOTFILES[@]}; do
+  if [ -e $HOME/.config/nvim/$file ]; then
     EXISTING_VIMDOTFILES+=( $file )
   fi
 done
 
-if ! [ ${#EXISTING_VIMDOTFILES[@]} -eq 0 ]; then
-    echo -e "\n$yellow  [INFO]$white Removing vim dotfiles $green\"${EXISTING_VIMDOTFILES[*]}\"$white found in home directory."
-  for file in ${EXISTING_VIMDOTFILES[@]}; do
-    rm -rf $HOME/.vim/bundle/$file
+if ! [ ${#EXISTING_NVIMDOTFILES[@]} -eq 0 ]; then
+    echo -e "\n$yellow  [INFO]$white Removing nvim dotfiles $green\"${EXISTING_NVIMDOTFILES[*]}\"$white found in home directory."
+  for file in ${EXISTING_NVIMDOTFILES[@]}; do
+    rm -rf $HOME/.config/nvim/$file
   done
+fi
+
+# SETUP NVIM
+if ! [ -e $HOME/.config/nvim ]; then
+  mkdir -p $HOME/.config/nvim
 fi
 
 config checkout -f
 
-# VIM SETUP
-mkdir -p $HOME/.vim/autoload $HOME/.vim/bundle $HOME/.vim/pack/themes/start
-curl -LSso  $HOME/.vim/autoload/pathogen.vim https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim
-git clone https://github.com/bling/vim-airline.git $HOME/.vim/bundle/vim-airline
-git clone https://github.com/tpope/vim-fugitive.git $HOME/.vim/bundle/vim-fugitive
-git clone https://github.com/vim-airline/vim-airline-themes $HOME/.vim/bundle/vim-airline-themes
-git clone https://github.com/dracula/vim.git $HOME/.vim/pack/themes/start/dracula
 fc-cache -vf $HOME/.fonts/
 
 # Install starship
