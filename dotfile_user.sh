@@ -4,7 +4,7 @@
 # See about adding a starship theme set of options with examples.
 
 ## Sets up the git config alias for use before dot files are pulled down.
-function config {
+function dotgit {
   /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME $@
 }
 
@@ -31,7 +31,7 @@ fi
 config config --local status.showUntrackedFiles no
 
 ## Variables
-DOTFILES=(".bashrc" ".aliases" ".colors" ".environment" ".functions" ".vimrc")
+DOTFILES=(".bashrc" ".shell_aliases" ".shell_colors" ".shell_environment" ".shell_functions")
 NVIMDOTFILES=("init.lua")
 EXISTING_DOTFILES=()
 EXISTING_NVIMDOTFILES=()
@@ -69,9 +69,7 @@ if ! [ -e $HOME/.config/nvim ]; then
   mkdir -p $HOME/.config/nvim
 fi
 
-config checkout -f
-
-fc-cache -vf $HOME/.fonts/
+dotgit checkout -f
 
 # Install starship
 sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
