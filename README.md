@@ -35,21 +35,21 @@ First Time Setup: - Only used once.
 git init --bare $HOME/dotfiles
 
 # Set up the alias for working with your files in your .bashrc or .zshrc
-alias config='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
+alias dotgit='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
 # Restart your terminal session or rerun your shell of choice.
 bash
 
 # Set the config options.
-config config --local status.showUntrackedFiles no
+dotgit config --local status.showUntrackedFiles no
 ```
 
 Basic usage example:
 
 ```bash
-config add /path/to/file
-config commit -m "A short message"
-config push
+dotgit add /path/to/file
+dotgit commit -m "A short message"
+dotgit push
 ```
 
 ___
@@ -74,7 +74,7 @@ git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 bash
 
 # Set the config options.
-config config --local status.showUntrackedFiles no
+dotgit config --local status.showUntrackedFiles no
 
 ```
 
