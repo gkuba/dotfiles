@@ -46,6 +46,7 @@ eval "$(fzf --zsh)"
 # ─────────────────────────────────────────────
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh
 
 # Style autosuggestions to be subtle gray (matches your dark theme)
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
