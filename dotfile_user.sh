@@ -18,6 +18,15 @@ function getConfig {
   fi
 }
 
+# Gets the zsh plugins needed for fish like terminal features.
+function getZshPlugins {
+  if ! [ -e $HOME/.zsh ]; then
+  mkdir -p $HOME/.zsh
+  fi
+  git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.zsh/zsh-syntax-highlighting
+}
+
 ## Defining colors for our text output
 green="\033[0;38;5;2m"
 white="\033[0;38;5;7m"
@@ -28,10 +37,10 @@ if ! [ -e $HOME/dotfiles ]; then
   git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
 fi
 
-config config --local status.showUntrackedFiles no
+dotgit config --local status.showUntrackedFiles no
 
 ## Variables
-DOTFILES=(".bashrc" ".shell_aliases" ".shell_colors" ".shell_environment" ".shell_functions")
+DOTFILES=(".bashrc" ".shell_aliases" ".shell_colors" ".shell_environment" ".shell_functions" ".zshrc")
 NVIMDOTFILES=("init.lua")
 EXISTING_DOTFILES=()
 EXISTING_NVIMDOTFILES=()
@@ -70,6 +79,8 @@ if ! [ -e $HOME/.config/nvim ]; then
 fi
 
 dotgit checkout -f
+
+getZshPlugins
 
 # Install starship
 sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y

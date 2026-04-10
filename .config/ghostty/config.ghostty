@@ -2,7 +2,9 @@
 language = en
 
 # === Shell Integration ===
-shell-integration = bash
+shell-integration = zsh
+# shell-integration = bash
+# shell-integration = none
 
 # === Font ===
 # font-family = "Fira Code"
