@@ -31,8 +31,6 @@ setopt extended_history         # save timestamps
 setopt autocd                   # cd by just typing directory name
 setopt interactive_comments     # allow comments in interactive shell
 
-# Removed: no_empty_cmd_completion (not valid in Zsh)
-
 # ─────────────────────────────────────────────
 # Starship Prompt
 # ─────────────────────────────────────────────

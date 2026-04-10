@@ -1,0 +1,139 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+# ─────────────────────────────────────────────
+# Powerline Format (Cleaned up)
+# ─────────────────────────────────────────────
+format = """
+[](purple)$os$username[](bg:cyan fg:purple)$directory[](bg:pink fg:cyan)$git_branch$git_status[](fg:pink bg:green)$c$rust$golang$nodejs$php$java$kotlin$haskell$python[](fg:green bg:comment)$conda[](fg:comment bg:comment)$time[ ](fg:comment)$cmd_duration
+$character"""
+
+palette = 'dracula'
+
+# ─────────────────────────────────────────────
+# Dracula Palette
+# ─────────────────────────────────────────────
+[palettes.dracula]
+pink    = "#ff79c6"
+red     = "#ff5555"
+yellow  = "#f1fa8c"
+green   = "#50fa7b"
+blue    = "#644ac9"
+purple  = "#bd93f9"
+cyan    = "#8be9fd"
+comment = "#6272a4"
+base    = "#1e1e2e"
+mantle  = "#181825"
+crust   = "#11111b"
+
+# ─────────────────────────────────────────────
+# Core Modules
+# ─────────────────────────────────────────────
+[os]
+disabled = false
+style = "bg:purple fg:crust"
+
+[os.symbols]
+Arch = "󰣇"
+CachyOS = "󰣇"
+Linux = "󰌽"
+Debian = "󰣚"
+# Add more OS symbols if needed
+
+[username]
+show_always = true
+style_user = "bg:purple fg:crust"
+style_root = "bg:purple fg:crust"
+format = '[ $user]($style)'
+
+[directory]
+style = "bg:cyan fg:crust"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
+
+[git_branch]
+symbol = ""
+style = "bg:pink"
+format = '[[ $symbol $branch ](fg:crust bg:pink)]($style)'
+
+[git_status]
+style = "bg:pink"
+format = '[[($all_status$ahead_behind )](fg:crust bg:pink)]($style)'
+
+# ─────────────────────────────────────────────
+# Language / Tool Modules (kept but can be disabled easily)
+# ─────────────────────────────────────────────
+[c]
+symbol = " "
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[rust]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[golang]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+
+[python]
+symbol = ""
+style = "bg:green"
+format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:crust bg:green)]($style)'
+
+[time]
+disabled = false
+time_format = "%_I:%M %p"
+style = "bg:comment"
+format = '[[  $time ](fg:crust bg:comment)]($style)'
+
+[cmd_duration]
+show_milliseconds = false
+format = "  $duration"
+style = "bg:purple fg:crust"
+disabled = false
+
+[character]
+success_symbol = '[❯](bold green)'
+error_symbol   = '[❯](bold red)'
+vimcmd_symbol  = '[❮](bold green)'
+
+# ─────────────────────────────────────────────
+# Disable modules you rarely use (uncomment to enable)
+# ─────────────────────────────────────────────
+[package]
+disabled = true
+
+[conda]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[java]
+disabled = true
+
+[php]
+disabled = true
+
+[haskell]
+disabled = true
+
+[kotlin]
+disabled = true
