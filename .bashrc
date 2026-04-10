@@ -1,5 +1,8 @@
 ## If not running interactively, don't do anything
 [[ $- != *i* ]] && return
+# Run fastfetch on interactive terminal startup
+fastfetch
+
 ##-------------------------------------------------------------
 ## Some Settings
 ##-------------------------------------------------------------
