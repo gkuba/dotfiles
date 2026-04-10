@@ -1,2 +1,50 @@
+# === Language ===
+language = en
+
+# === Shell Integration ===
+shell-integration = bash
+
+# === Font ===
+# font-family = "Fira Code"
+font-family = FiraCode Nerd Font
+font-size = 12
+# font-size = 13   # try 13-15 depending on your screen
+
+# Enable ligatures (Fira Code's main feature)
+font-feature = liga
+font-feature = calt
+
+# Optional: Make bold brighter and enable synthetic styles if needed
+bold-is-bright = true
+font-synthetic-style = true
+
+# === Glassy / Frosted Background ===
+background-opacity = 0.75
+# background-blur-radius = 30
+
+# Optional: Dark background color that works well with glass
+# background = #1e1e2e
+
+# === Theme (popular modern choices) ===
+# Choose one:
 theme = Builtin Pastel Dark
-shell-integration = fish
+# theme = catppuccin-mocha
+# theme = dracula
+# theme = tokyonight-moon
+# theme = rose-pine-moon
+
+# === Window & Padding (clean ricing look) ===
+window-padding-x = 12
+window-padding-y = 12
+window-decoration = true 
+
+# === Cursor & Other nice touches ===
+cursor-style = block
+cursor-style-blink = false
+mouse-hide-while-typing = true
+
+# Hide titlebar on KDE (if you want ultra clean)
+gtk-titlebar = false
+
+# Better unfocused window behavior
+unfocused-split-opacity = 0.85
