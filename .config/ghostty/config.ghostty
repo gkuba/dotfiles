@@ -2,9 +2,9 @@
 language = en
 
 # === Shell Integration ===
-shell-integration = zsh
+# shell-integration = zsh
 # shell-integration = bash
-# shell-integration = none
+shell-integration = none
 
 # === Font ===
 # font-family = "Fira Code"
@@ -22,7 +22,7 @@ font-synthetic-style = true
 
 # === Glassy / Frosted Background ===
 background-opacity = 0.75
-# background-blur-radius = 30
+background-blur-radius = 20
 
 # Optional: Dark background color that works well with glass
 # background = #1e1e2e
@@ -42,8 +42,10 @@ window-decoration = true
 
 # === Cursor & Other nice touches ===
 cursor-style = block
+# cursor-color = #bd93f9
 cursor-style-blink = false
-mouse-hide-while-typing = true
+cursor-opacity = 1.0
+mouse-hide-while-typing = false
 
 # Hide titlebar on KDE (if you want ultra clean)
 gtk-titlebar = false
