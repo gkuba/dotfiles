@@ -113,12 +113,20 @@ require("lazy").setup({
 })
 
 -- =============================================
--- Key Mappings (same as your .vimrc)
+-- Window/Pane Navigation - Ctrl + Arrow Keys
 -- =============================================
-vim.keymap.set("n", "<C-J>", "<C-W><C-J>", { noremap = true })
-vim.keymap.set("n", "<C-K>", "<C-W><C-K>", { noremap = true })
-vim.keymap.set("n", "<C-L>", "<C-W><C-L>", { noremap = true })
-vim.keymap.set("n", "<C-H>", "<C-W><C-H>", { noremap = true })
+
+-- Move between splits with Ctrl + Arrow keys
+vim.keymap.set('n', '<C-Left>',  '<C-w>h', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-Down>',  '<C-w>j', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-Up>',    '<C-w>k', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-Right>', '<C-w>l', { noremap = true, silent = true })
+
+-- Optional: Also allow resizing with Shift + Arrow keys (very handy)
+vim.keymap.set('n', '<S-Left>',  '<C-w><', { noremap = true, silent = true })
+vim.keymap.set('n', '<S-Right>', '<C-w>>', { noremap = true, silent = true })
+vim.keymap.set('n', '<S-Up>',    '<C-w>+', { noremap = true, silent = true })
+vim.keymap.set('n', '<S-Down>',  '<C-w>-', { noremap = true, silent = true })
 
 -- Extra useful mappings for nvim-tree
 vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
