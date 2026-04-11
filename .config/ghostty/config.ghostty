@@ -1,6 +1,14 @@
 # === Language ===
 language = en
 
+# === Window Size ===
+# Default window size in columns x rows (terminal cells)
+window-width = 100
+window-height = 20
+
+# Optional: Center the window when it opens
+#window-position = center
+
 # === Shell Integration ===
 # shell-integration = zsh
 # shell-integration = bash
