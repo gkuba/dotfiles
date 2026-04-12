@@ -9,7 +9,7 @@ __NOTE:__ You can get my other themes/styles for the Starship prompt here: [gkub
 Just copy and paste this command into your terminal and it will pull down my dotfiles and VIM configs as well as the Fira Code fonts for you.
 
 ```bash
-curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/dotfile_user.sh | bash
+bash <(curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-dotfiles.sh)
 ```
 
 If you would like to set this up for yourself follow the __First Time Setup__ or if you would like to manually set this up to get a better understanding follow the __Manual Installation__ section.
