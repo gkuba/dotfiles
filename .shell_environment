@@ -2,5 +2,7 @@
 ## Environment Settings
 ##-------------------------------------------------------------
 
-## Setup the most pager
-export PAGER="/usr/bin/most -s"
+# Modern pager setup with good color support
+export PAGER="less"
+export LESS="-R -M -i -F --mouse"     # -R = color, -M = long prompt, etc.
+export LESSOPEN="| /usr/bin/source-highlight --failsafe --out-format=esc256 -o STDOUT -i %s 2>/dev/null || cat %s"

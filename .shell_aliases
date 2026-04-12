@@ -2,50 +2,65 @@
 ## Aliases
 ##-------------------------------------------------------------
 
-## enable color support of ls and also add handy aliases
+# ── Color support and basic ls aliases ─────────────────────
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto -F'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-
-    alias ip='ip -c'
 fi
 
-## some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
+# Modern ls aliases (using eza if available, otherwise fallback)
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza --color=always --group-directories-first --icons'
+    alias ll='eza -lh --color=always --group-directories-first --icons --git'
+    alias la='eza -la --color=always --group-directories-first --icons --git'
+    alias l='eza -l --color=always --group-directories-first --icons'
+else
+    alias ls='ls --color=auto -F'
+    alias ll='ls -alF --color=auto'
+    alias la='ls -A --color=auto'
+    alias l='ls -CF --color=auto'
+fi
 
-## Intelligent Utilities
+# Color for other common commands
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias ip='ip -c'
+
+# ── Intelligent / Safe Utilities ───────────────────────────
 alias mkdir='mkdir -pv'
 alias rm='rm -Iv'
 alias cp='cp -iv'
+alias mv='mv -iv'
 
-## Sudo commands
+# ── Sudo shortcuts ─────────────────────────────────────────
 alias service='sudo service'
+alias systemctl='sudo systemctl'     # Added as requested
 
-if [ "$(isPresent apt)" = 1 ] && [ "$(isPresent nala)" = 1 ]; then
-
+# Debian-based shortcuts
+if command -v nala >/dev/null 2>&1; then
     alias apt='nala'
     alias nala='sudo nala'
-
-elif [ "$(isPresent apt-get)" = 1 ]; then
-
+elif command -v apt-get >/dev/null 2>&1; then
     alias apt='sudo apt-get'
 fi
 
-if [ "$(isPresent pacman)" = 1 ] && [ $USER != "root" ]; then
-    alias pacman='sudo pacman'
-fi
-
-if [ "$(isPresent yum)" = 1 ]; then
+# RPM-based shortcuts
+if command -v dnf >/dev/null 2>&1; then
+    alias dnf='sudo dnf'
+elif command -v yum >/dev/null 2>&1; then
     alias yum='sudo yum --color=auto'
 fi
 
-## Whatsmyip fucntion alias
+# ── Custom function aliases ────────────────────────────────
 alias whatismyip="whatsmyip"
+alias wi="whatsmyip"                    # short version
+
+# ── Pacman / Paru shortcuts ────────────────────────────────
+alias p='pacman'
+alias pa='paru'
+
+# Quick common actions
+alias pup='pacman update'               # sync repos only
+alias pug='pacman upgrade'              # upgrade official packages
+alias paug='paru upgrade'               # upgrade everything (AUR too)
+alias paa='paru autoremove'             # remove orphans via paru

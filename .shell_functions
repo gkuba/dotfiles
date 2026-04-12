@@ -2,135 +2,214 @@
 ## Functions
 ##-------------------------------------------------------------
 
-## Extracts any archive(s) (if unp isn't installed)
+# Extracts any archive(s)
 extract() {
-	for archive in $*; do
-		if [ -f $archive ]; then
-			case $archive in
-			*.tar.bz2) tar xvjf $archive ;;
-			*.tar.gz) tar xvzf $archive ;;
-			*.bz2) bunzip2 $archive ;;
-			*.rar) rar x $archive ;;
-			*.gz) gunzip $archive ;;
-			*.tar) tar xvf $archive ;;
-			*.tbz2) tar xvjf $archive ;;
-			*.tgz) tar xvzf $archive ;;
-			*.zip) unzip $archive ;;
-			*.Z) uncompress $archive ;;
-			*.7z) 7z x $archive ;;
-			*) echo "don't know how to extract '$archive'..." ;;
-			esac
-		else
-			echo "'$archive' is not a valid file!"
-		fi
-	done
+    for archive in "$@"; do
+        if [ -f "$archive" ]; then
+            case "$archive" in
+                *.tar.bz2) tar xvjf "$archive" ;;
+                *.tar.gz)  tar xvzf "$archive" ;;
+                *.bz2)     bunzip2 "$archive" ;;
+                *.rar)     rar x "$archive" ;;
+                *.gz)      gunzip "$archive" ;;
+                *.tar)     tar xvf "$archive" ;;
+                *.tbz2)    tar xvjf "$archive" ;;
+                *.tgz)     tar xvzf "$archive" ;;
+                *.zip)     unzip "$archive" ;;
+                *.Z)       uncompress "$archive" ;;
+                *.7z)      7z x "$archive" ;;
+                *)         echo "don't know how to extract '$archive'..." ;;
+            esac
+        else
+            echo "'$archive' is not a valid file!"
+        fi
+    done
 }
 
-## Searches for text in all files in the current folder
-ftext() {
-	# -i case-insensitive
-	# -I ignore binary files
-	# -H causes filename to be printed
-	# -r recursive search
-	# -n causes line number to be printed
-	# optional: -F treat search term as a literal, not a regular expression
-	# optional: -l only print filenames and not the matching lines ex. grep -irl "$1" *
-	grep -iIHrn --color=always "$1" . | less -r
-}
-
-## Copy and go to the directory
-cpg() {
-	if [ -d "$2" ]; then
-		cp $1 $2 && cd $2
-	else
-		cp $1 $2
-	fi
-}
-
-## Move and go to the directory
-mvg() {
-	if [ -d "$2" ]; then
-		mv $1 $2 && cd $2
-	else
-		mv $1 $2
-	fi
-}
-
-## Create and go to the directory
-mkdirg() {
-	mkdir -p $1
-	cd $1
-}
-
-## Goes up a specified number of directories  (i.e. up 4)
-up() {
-	local d=""
-	limit=$1
-	for ((i = 1; i <= limit; i++)); do
-		d=$d/..
-	done
-	d=$(echo $d | sed 's/^\///')
-	if [ -z "$d" ]; then
-		d=..
-	fi
-	cd $d
-}
-
-## Show current network information
+# Show current network information (cleaner, jq-free)
 netinfo() {
-	IP_IS_PRESENT="$(command -v ip &>/dev/null && echo 1)"
+    echo "=== Network Information ==="
 
-	if [ ! "$IP_IS_PRESENT" ]; then
-		echo "The ip command isn't available in the current environment. It's missing from \$PATH"
-		exit 130
-	fi
+    # IP Addresses
+    ip -4 addr show | awk '
+        /inet / && $2 != "127.0.0.1/8" {
+            gsub(/\/[0-9]+/, "", $2)
+            interface = $NF
+            printf "Device :  %s\n", interface
+            printf "Address:  %s\n", $2
+            printf "----------------------------\n"
+        }
+    '
 
-	ifNames=$(ip -j link | jq -r '.[].ifname | select(. != "lo")')
-	for i in $ifNames; do
-		IP_ADDRESS="$(/usr/sbin/ip -4 a show $i | awk /'inet/ {print $2}' | cut -d/ -f1)"
-		MAC_ADDRESS="$(/usr/sbin/ip -4 link show $i | awk /'link/ {print $2}')"
-
-		echo
-		echo "--- Network Information ----"
-		echo -e "Device :  "$i
-		echo -e "Address:  "$IP_ADDRESS
-		echo -e "MACAddr:  "$MAC_ADDRESS
-		echo "----------------------------"
-	done
+    # MAC Addresses
+    ip link show | awk '
+        /link\/ether/ {
+            interface = $2
+            mac = $3
+            gsub(/:/, "", mac)
+            printf "MACAddr:  %s (%s)\n", mac, interface
+        }
+    '
 }
 
-## IP address lookup
+# IP address lookup - Tight aligned output
 whatsmyip() {
+    echo "Fetching IP information..."
 
-	IP_IS_PRESENT="$(command -v ip &>/dev/null && echo 1)"
-	EXTERNAL_IP="$(curl -s https://ipecho.net/plain)"
+    # Get External IP with reliable fallbacks
+    EXTERNAL_IP="$(curl -s --max-time 6 https://api.ipify.org 2>/dev/null || \
+                   curl -s --max-time 6 https://icanhazip.com 2>/dev/null || \
+                   curl -s --max-time 6 https://ifconfig.me 2>/dev/null || \
+                   echo "Unable to fetch external IP")"
 
-	if [ ! "$IP_IS_PRESENT" ]; then
-		echo "The ip command isn't available in the current environment. It's missing from \$PATH"
-		exit 130
-	fi
+    echo
 
-	ifNames=$(ip -j link | jq -r '.[].ifname | select(. != "lo")')
+    echo "Internal IPs:"
+    ip -4 addr show | awk '
+        /inet / && $2 != "127.0.0.1/8" {
+            gsub(/\/[0-9]+/, "", $2)
+            interface = $NF
+            printf "  %-15s  %s\n", $2, interface
+        }
+    '
 
-	echo
-
-	# Internal IP Lookup
-	for i in $ifNames; do
-		IP_ADDRESS="$(/usr/sbin/ip -4 a show $i | awk /'inet/ {print $2}' | cut -d/ -f1)"
-
-		echo -e "Internal IP:\t$IP_ADDRESS\t($i)"
-	done
-
-	# External IP Lookup
-	echo -e "External IP:\t$EXTERNAL_IP"
+    echo
+    echo -e "External IP:\t$EXTERNAL_IP"
 }
 
-## This is used to check if an application is installed and in $PATH by checking its version and returns 1 if present.
-## Example - isPresent apt
-isPresent() {
-	command -v "$1" &>/dev/null && echo 1
-}
-
+# dotgit - bare repo management
 dotgit() {
-  /usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree="$HOME" "$@"
+    /usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME" "$@"
+}
+
+# ===================================================
+# Nala-style pacman wrapper (official repos only)
+# ===================================================
+pacman() {
+    case "$1" in
+        update)
+            echo "→ Syncing package databases..."
+            command sudo pacman -Sy "${@:2}" ;;
+
+        upgrade)
+            echo "→ Upgrading installed packages..."
+            command sudo pacman -Su "${@:2}" ;;
+
+        install)
+            command sudo pacman -S "${@:2}" ;;
+
+        remove)
+            command sudo pacman -Rns "${@:2}" ;;
+
+        autoremove)
+            echo "→ Removing orphan packages..."
+            command sudo pacman -Rns $(pacman -Qdtq) ;;
+
+        search)
+            command pacman -Ss "${@:2}" ;;
+
+        info)
+            command pacman -Si "${@:2}" ;;
+
+        clean)
+            command sudo pacman -Sc "${@:2}" ;;
+
+        orphans)
+            command pacman -Qdtq ;;
+
+        fix)
+            echo "→ Forcing database refresh and upgrading..."
+            command sudo pacman -Syyu "${@:2}" ;;
+
+        help|--help|-h)
+            echo "pacman wrapper (Nala-style)"
+            echo "==========================="
+            echo ""
+            echo "  pacman update        →  sudo pacman -Sy"
+            echo "  pacman upgrade       →  sudo pacman -Su"
+            echo "  pacman install <pkg> →  sudo pacman -S <pkg>"
+            echo "  pacman remove <pkg>  →  sudo pacman -Rns <pkg>"
+            echo "  pacman autoremove    →  remove orphan packages"
+            echo "  pacman search <term> →  pacman -Ss <term>"
+            echo "  pacman info <pkg>    →  pacman -Si <pkg>"
+            echo "  pacman clean         →  sudo pacman -Sc"
+            echo "  pacman orphans       →  pacman -Qdtq"
+            echo "  pacman fix           →  sudo pacman -Syyu"
+            echo ""
+            echo "Use 'pacman --real-help' for original pacman help"
+            return 0
+            ;;
+
+        --real-help)
+            command pacman --help ;;
+
+        *)
+            command sudo pacman --color always "$@" ;;
+    esac
+}
+
+# =============================================
+# Nala-style paru wrapper (AUR + official repos)
+# =============================================
+paru() {
+    case "$1" in
+        update)
+            echo "→ Syncing package databases (official + AUR)..."
+            command paru -Sy "${@:2}" ;;
+
+        upgrade)
+            echo "→ Upgrading all packages (official + AUR)..."
+            command paru -Syu "${@:2}" ;;
+
+        install)
+            command paru -S "${@:2}" ;;
+
+        remove)
+            command paru -Rns "${@:2}" ;;
+
+        autoremove)
+            echo "→ Removing orphan packages..."
+            command paru -Rns $(paru -Qdtq) ;;
+
+        search)
+            command paru -Ss "${@:2}" ;;
+
+        info)
+            command paru -Si "${@:2}" ;;
+
+        clean)
+            command paru -Sc "${@:2}" ;;
+
+        orphans)
+            command paru -Qdtq ;;
+
+        fix)
+            echo "→ Forcing database refresh and upgrading everything..."
+            command paru -Syyu "${@:2}" ;;
+
+        help|--help|-h)
+            echo "paru wrapper (Nala-style)"
+            echo "========================="
+            echo ""
+            echo "  paru update        →  paru -Sy"
+            echo "  paru upgrade       →  paru -Syu"
+            echo "  paru install <pkg> →  paru -S <pkg>"
+            echo "  paru remove <pkg>  →  paru -Rns <pkg>"
+            echo "  paru autoremove    →  remove orphan packages"
+            echo "  paru search <term> →  paru -Ss <term>"
+            echo "  paru info <pkg>    →  paru -Si <pkg>"
+            echo "  paru clean         →  paru -Sc"
+            echo "  paru orphans       →  paru -Qdtq"
+            echo "  paru fix           →  paru -Syyu"
+            echo ""
+            echo "Use 'paru --real-help' for original paru help"
+            return 0
+            ;;
+
+        --real-help)
+            command paru --help ;;
+
+        *)
+            command paru --color always "$@" ;;
+    esac
 }
