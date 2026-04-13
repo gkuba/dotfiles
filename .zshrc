@@ -69,3 +69,11 @@ HISTFILE=~/.zsh_history
 # ─────────────────────────────────────────────
 bindkey '^[[A' history-substring-search-up   # Up arrow
 bindkey '^[[B' history-substring-search-down # Down arrow
+
+# ── Line Navigation ──────────────────────────
+bindkey '^[[H' beginning-of-line          # Home
+bindkey '^[[F' end-of-line                # End
+
+# Alternative sequences (helps with Ghostty compatibility)
+bindkey '^[OH' beginning-of-line
+bindkey '^[OF' end-of-line
