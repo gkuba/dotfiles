@@ -4,7 +4,7 @@ language = en
 # === Window Size ===
 # Default window size in columns x rows (terminal cells)
 window-width = 100
-window-height = 20
+window-height = 24
 
 # Optional: Center the window when it opens
 #window-position = center
@@ -29,8 +29,8 @@ bold-is-bright = true
 font-synthetic-style = true
 
 # === Glassy / Frosted Background ===
-background-opacity = 0.75
-background-blur-radius = 20
+background-opacity = 0.8
+# background-blur-radius = 10
 
 # Optional: Dark background color that works well with glass
 # background = #1e1e2e
@@ -59,4 +59,7 @@ mouse-hide-while-typing = false
 gtk-titlebar = false
 
 # Better unfocused window behavior
-unfocused-split-opacity = 0.85
+unfocused-split-opacity = 1.85
+
+# === Scrolling ===─
+mouse-scroll-multiplier = 0.5

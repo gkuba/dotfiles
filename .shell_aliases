@@ -32,10 +32,6 @@ alias rm='rm -Iv'
 alias cp='cp -iv'
 alias mv='mv -iv'
 
-# ── Sudo shortcuts ─────────────────────────────────────────
-alias service='sudo service'
-alias systemctl='sudo systemctl'     # Added as requested
-
 # Debian-based shortcuts
 if command -v nala >/dev/null 2>&1; then
     alias apt='nala'
