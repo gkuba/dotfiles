@@ -1,57 +1,38 @@
-# =============================================================================
-# KDE Window Rules (kwinrulesrc)
-# Rules for: Steam, Discord, Vivaldi, and Vivaldi PiP
-# =============================================================================
-
 [General]
-count=4
-rules=d648a8bc-9cab-4e2f-be23-21300a8d24ec,cf3c003d-0e4f-42b3-a7ca-2725dbcf0ab4,c173455b-8c23-49ca-9e61-cbf76b560f39,5fb3879d-7187-4949-aa35-43e7b1a65b64
+count=3
+rules=d648a8bc-9cab-4e2f-be23-21300a8d24ec,cf3c003d-0e4f-42b3-a7ca-2725dbcf0ab4,c173455b-8c23-49ca-9e61-cbf76b560f39
 
-# ── Vivaldi PiP Window ───────────────────────────────────────────────────────
+[c173455b-8c23-49ca-9e61-cbf76b560f39]
+Description=Discord
+position=5120,0
+positionrule=3
+size=1280,1440
+sizerule=2              # Relaxed from Force
+types=1
+wmclass=discord
+wmclassmatch=1
+
+[cf3c003d-0e4f-42b3-a7ca-2725dbcf0ab4]
+Description=Vivaldi
+position=0,0
+positionrule=3
+size=2560,1440
+sizerule=2              # Relaxed from Force
+types=1
+wmclass=vivaldi-stable
+wmclassmatch=1
+
 [d648a8bc-9cab-4e2f-be23-21300a8d24ec]
 Description=Vivaldi-bin PiP window
-wmclass=vivaldi-bin
-wmclassmatch=1
 above=true
 aboverule=4
 position=1927,1050
-positionrule=4
+positionrule=3          # Changed from 4 (Force) to 3 (Apply Initially + Remember)
 size=633,353
-sizerule=4
+sizerule=2              # Changed to "Apply Initially" instead of Force
 skippager=true
 skippagerrule=4
 skiptaskbar=true
 skiptaskbarrule=4
-
-# ── Main Vivaldi Window ──────────────────────────────────────────────────────
-[cf3c003d-0e4f-42b3-a7ca-2725dbcf0ab4]
-Description=Vivaldi
-wmclass=vivaldi-stable
+wmclass=vivaldi-bin
 wmclassmatch=1
-position=0,0
-positionrule=3
-size=2560,1440
-sizerule=3
-types=1
-
-# ── Discord ──────────────────────────────────────────────────────────────────
-[c173455b-8c23-49ca-9e61-cbf76b560f39]
-Description=Discord
-wmclass=discord
-wmclassmatch=1
-position=5120,0
-positionrule=3
-size=1280,1440
-sizerule=3
-types=1
-
-# ── Steam ────────────────────────────────────────────────────────────────────
-[5fb3879d-7187-4949-aa35-43e7b1a65b64]
-Description=Steam
-wmclass=steam
-wmclassmatch=1
-position=6400,0
-positionrule=3
-size=1280,1440
-sizerule=3
-types=1
