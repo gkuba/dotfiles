@@ -10,9 +10,9 @@ window-height = 24
 #window-position = center
 
 # === Shell Integration ===
-# shell-integration = zsh
+shell-integration = zsh
 # shell-integration = bash
-shell-integration = none
+# shell-integration = none
 
 # === Font ===
 # font-family = "Fira Code"
