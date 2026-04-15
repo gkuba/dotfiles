@@ -52,9 +52,14 @@
             "showPeCoreCount": true
         },
         {
-            "key": "│ {#34}󰉉 disk    {#keys}│",
+            "key": "│ {#34}󰉉 root    {#keys}│",
             "type": "disk",
             "folders": "/"
+        },
+        {
+            "key": "│ {#34}󰉉 games   {#keys}│",
+            "type": "disk",
+            "folders": "/Games"
         },
         {
             "key": "│ {#35} memory  {#keys}│",
