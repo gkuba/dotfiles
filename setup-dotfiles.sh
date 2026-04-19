@@ -1,246 +1,207 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Dotfiles Setup Script - Interactive
+# Arch-based Post-Install Script - GKuba Edition
 # =============================================================================
+
 set -euo pipefail
 
-# ── Colors ─────────────────────────────────────────────────────────────────────
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-YELLOW="\033[0;33m"
-BLUE="\033[0;34m"
-MAGENTA="\033[0;35m"
-CYAN="\033[0;36m"
-WHITE="\033[0;37m"
-RESET="\033[0m"
+# ── Colors (All defined at the top) ───────────────────────────────────────────
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+CYAN="\e[36m"
+ENDCOLOR="\e[0m"
+RESET="\e[0m"
 
 info()    { echo -e "${BLUE}[INFO]${RESET} $*"; }
 success() { echo -e "${GREEN}[OK]${RESET} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${RESET} $*"; }
 error()   { echo -e "${RED}[ERROR]${RESET} $*" >&2; }
 
-clear
-echo -e "${MAGENTA}===================================================${RESET}"
-echo -e "${CYAN} Dotfiles Setup Script${RESET}"
-echo -e "${MAGENTA}===================================================${RESET}"
-echo
+# ── Configuration ──────────────────────────────────────────────────────────────
+CORE_PACKAGES="git curl unzip neovim fastfetch fzf"
 
-info "Gathering system information..."
-CURRENT_USER=$(whoami)
-CURRENT_SHELL=$(basename "$SHELL")
-ZSH_INSTALLED=false
-if command -v zsh >/dev/null 2>&1; then
-    ZSH_INSTALLED=true
+# Extra packages (installed with pacman)
+EXTRA_PACKAGES="discord ghostty obsidian vivaldi spotify-launcher solaar"
+
+# Separate prompts
+VSCODE_PACKAGE="visual-studio-code-bin"
+COOLING_PACKAGES="coolercontrol coolercontrold"
+
+# ── Help ───────────────────────────────────────────────────────────────────────
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [FUNCTION...]
+
+Available functions:
+  checkUpdates     Update system packages
+  installPackages  Install wanted packages
+
+If no arguments are given, the script runs interactively.
+EOF
+    exit 0
+}
+
+# ── Check if running as root ───────────────────────────────────────────────────
+if [[ $EUID -ne 0 ]]; then
+    error "This script must be run as root. Please use 'sudo su' first."
+    exit 1
 fi
 
-echo
-echo -e "User: ${GREEN}$CURRENT_USER${RESET}"
-echo -e "Current Shell: ${YELLOW}$CURRENT_SHELL${RESET}"
-echo -e "Zsh Installed: $( [[ "$ZSH_INSTALLED" == true ]] && echo "${GREEN}Yes${RESET}" || echo "${RED}No${RESET}" )"
+# ── Check if running on Arch-based system ──────────────────────────────────────
+check_arch_based() {
+    if [[ ! -f /etc/os-release ]]; then
+        error "Cannot detect OS. This script is for Arch-based systems only."
+        exit 1
+    fi
 
-# ── Parse flags ────────────────────────────────────────────────────────────────
-RUN_DOTGIT=false
-RUN_ZSH=false
-RUN_NVIM=false
-RUN_FASTFETCH=false
-RUN_STARSHIP=false
-RUN_HOSTS=false
+    source /etc/os-release
 
-if [[ $# -eq 0 ]]; then
-    RUN_DOTGIT=true
-    RUN_ZSH=true
-    RUN_NVIM=true
-    RUN_FASTFETCH=true
-    RUN_STARSHIP=true
-else
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --dotgit)    RUN_DOTGIT=true ;;
-            --zsh)       RUN_ZSH=true ;;
-            --nvim)      RUN_NVIM=true ;;
-            --fastfetch) RUN_FASTFETCH=true ;;
-            --starship)  RUN_STARSHIP=true ;;
-            --hosts)     RUN_HOSTS=true ;;
-            --all)
-                RUN_DOTGIT=true
-                RUN_ZSH=true
-                RUN_NVIM=true
-                RUN_FASTFETCH=true
-                RUN_STARSHIP=true
-                RUN_HOSTS=true
-                ;;
-            *) error "Unknown option: $1"; exit 1 ;;
-        esac
-        shift
-    done
-fi
+    if [[ "$ID" != "arch" && "$ID_LIKE" != *"arch"* ]]; then
+        error "This script is designed for Arch-based distributions only."
+        error "Detected: ${PRETTY_NAME:-Unknown}"
+        exit 1
+    fi
 
-echo
-echo -e "${CYAN}The following actions will be performed:${RESET}"
-[[ "$RUN_DOTGIT" == true ]]    && echo " • Setup bare git repository"
-[[ "$RUN_ZSH" == true ]]       && echo " • Install Zsh plugins"
-[[ "$RUN_NVIM" == true ]]      && echo " • Setup Neovim config"
-[[ "$RUN_FASTFETCH" == true ]] && echo " • Setup fastfetch config"
-[[ "$RUN_STARSHIP" == true ]]  && echo " • Install Starship + theme"
-[[ "$RUN_HOSTS" == true ]]     && echo " • Update /etc/hosts from Gist"
+    info "Detected Arch-based system: ${PRETTY_NAME}"
+}
 
-# ── Ask about changing shell to Zsh ───────────────────────────────────────────
-if [[ "$ZSH_INSTALLED" == true && "$CURRENT_SHELL" != "zsh" ]]; then
+# ── Functions ──────────────────────────────────────────────────────────────────
+
+checkUpdates() {
+    info "Checking for and installing system updates..."
+    pacman -Syu --noconfirm
+    success "System updated"
+}
+
+installPackages() {
+    local packages="$1"
+    info "Installing packages with pacman..."
+
+    pacman -S --noconfirm $packages
+    success "Packages installed successfully"
+}
+
+# ── Interactive Mode ───────────────────────────────────────────────────────────
+interactive_mode() {
+    echo -e "${CYAN}===================================================${ENDCOLOR}"
+    echo -e "          ${BLUE}Arch-based Post-Install Script${ENDCOLOR}"
+    echo -e "${CYAN}===================================================${ENDCOLOR}"
     echo
-    read -r -p "Would you like to change your default shell to Zsh? (y/N): " change_shell
-    if [[ "$change_shell" =~ ^[Yy]$ ]]; then
-        CHANGE_TO_ZSH=true
-        echo -e "${GREEN}→ Will change default shell to Zsh${RESET}"
+
+    echo -e "${BLUE}System Information:${ENDCOLOR}"
+    echo -e "  Hostname:      ${GREEN}$(hostname)${ENDCOLOR}"
+    echo -e "  OS:            ${GREEN}$(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)${ENDCOLOR}"
+    echo
+
+    echo -e "${BLUE}Core Packages:${ENDCOLOR}"
+    echo "  ${CORE_PACKAGES}"
+    echo
+
+    echo -e "${BLUE}Extra Packages (optional):${ENDCOLOR}"
+    echo "  ${EXTRA_PACKAGES}"
+    echo
+
+    read -r -p "Install extra packages? (y/N): " install_extra < /dev/tty
+
+    if [[ "$install_extra" =~ ^[Yy]$ ]]; then
+        PACKAGES_TO_INSTALL="$CORE_PACKAGES $EXTRA_PACKAGES"
+        echo -e "${GREEN}→ Will install core + extra packages${ENDCOLOR}"
+    else
+        PACKAGES_TO_INSTALL="$CORE_PACKAGES"
+        echo -e "${YELLOW}→ Will install core packages only${ENDCOLOR}"
+    fi
+
+    # VS Code prompt (installed with paru because it's AUR)
+    echo
+    read -r -p "Install Visual Studio Code (visual-studio-code-bin from AUR)? (y/N): " install_vscode < /dev/tty
+    if [[ "$install_vscode" =~ ^[Yy]$ ]]; then
+        echo -e "${GREEN}→ Will install Visual Studio Code using paru${ENDCOLOR}"
+    fi
+
+    # Cooling packages prompt
+    echo
+    read -r -p "Install cooling packages (coolercontrol + coolercontrold)? (y/N): " install_cooling < /dev/tty
+    if [[ "$install_cooling" =~ ^[Yy]$ ]]; then
+        PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $COOLING_PACKAGES"
+        echo -e "${GREEN}→ Will also install cooling packages${ENDCOLOR}"
+    fi
+
+    # Zsh shell change prompt
+    CURRENT_SHELL=$(basename "$SHELL")
+    if command -v zsh >/dev/null 2>&1 && [[ "$CURRENT_SHELL" != "zsh" ]]; then
+        echo
+        read -r -p "Change default shell to Zsh? (y/N): " change_shell < /dev/tty
+        if [[ "$change_shell" =~ ^[Yy]$ ]]; then
+            CHANGE_TO_ZSH=true
+            echo -e "${GREEN}→ Will change default shell to Zsh${ENDCOLOR}"
+        else
+            CHANGE_TO_ZSH=false
+        fi
     else
         CHANGE_TO_ZSH=false
     fi
-else
-    CHANGE_TO_ZSH=false
-fi
 
-# ── Hosts file prompt (only if not using --all or --hosts flag) ───────────────
-if [[ "$RUN_HOSTS" == false ]]; then
     echo
-    read -r -p "Update /etc/hosts by appending entries from GitHub Gist? (y/N): " update_hosts
-    if [[ "$update_hosts" =~ ^[Yy]$ ]]; then
-        RUN_HOSTS=true
+    echo -e "${YELLOW}Ready to proceed with the following:${RESET}"
+    echo "   • System update"
+    echo "   • Install: $PACKAGES_TO_INSTALL"
+    [[ "$install_vscode" =~ ^[Yy]$ ]] && echo "   • Visual Studio Code (via paru)"
+    [[ "$CHANGE_TO_ZSH" == true ]] && echo "   • Change shell to Zsh"
+    echo
+
+    read -r -p "Press [Enter] to continue or type Q to quit: " confirm < /dev/tty
+
+    if [[ "$confirm" =~ ^[Qq]$ ]]; then
+        echo "Setup cancelled by user."
+        exit 0
     fi
+
+    checkUpdates
+    installPackages "$PACKAGES_TO_INSTALL"
+
+    # Install VS Code with paru if selected
+    if [[ "$install_vscode" =~ ^[Yy]$ ]]; then
+        info "Installing Visual Studio Code from AUR..."
+        paru -S --noconfirm "$VSCODE_PACKAGE"
+        success "Visual Studio Code installed"
+    fi
+
+    # ── Post-install actions ─────────────────────────────────────────────────
+    if [[ "$PACKAGES_TO_INSTALL" == *coolercontrold* ]]; then
+        echo
+        info "Enabling and starting CoolerControl daemon..."
+        sudo systemctl enable --now coolercontrold
+        sudo systemctl status coolercontrold --no-pager
+    fi
+
+    # Change shell if requested
+    if [[ "$CHANGE_TO_ZSH" == true ]]; then
+        info "Changing default shell to Zsh..."
+        chsh -s /usr/bin/zsh "$USER"
+        success "Default shell changed to Zsh."
+        echo -e "${YELLOW}→ Please log out and log back in for the change to take effect.${RESET}"
+    fi
+
+    echo
+    success "Post-installation completed successfully!"
+}
+
+# ── Main Logic ─────────────────────────────────────────────────────────────────
+
+if [[ $# -gt 0 ]]; then
+    for arg in "$@"; do
+        if declare -f "$arg" >/dev/null; then
+            "$arg"
+        else
+            error "No such function: $arg"
+            usage
+        fi
+    done
+else
+    interactive_mode
 fi
 
-echo
-read -r -p "Press [Enter] to proceed with setup, or type 'Q' to quit: " confirm
-if [[ "$confirm" =~ ^[Qq]$ ]]; then
-    echo "Setup cancelled by user."
-    exit 0
-fi
-
-echo
-info "Starting setup..."
-
-# ── Temporary dotgit function ─────────────────────────────────────────────────
-dotgit() {
-    /usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME" "$@"
-}
-
-# ── Update Hosts File (APPEND only) ───────────────────────────────────────────
-updateHostsFile() {
-    info "Updating /etc/hosts from GitHub Gist (appending custom entries)..."
-
-    # Backup current hosts file
-    sudo cp /etc/hosts "/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
-
-    # Download gist and append (skip localhost lines to prevent duplicates)
-    if sudo curl -fsSL https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/3c1ea40b581072ba0218140d4ceff47a55744b3c/gistfile1.txt \
-        -o /tmp/hosts-gist.tmp; then
-        
-        echo -e "\n# === Custom hosts from GitHub Gist (added $(date)) ===" | sudo tee -a /etc/hosts > /dev/null
-        
-        sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
-            sudo tee -a /etc/hosts > /dev/null
-        
-        rm -f /tmp/hosts-gist.tmp
-        success "/etc/hosts updated successfully (custom entries appended)"
-    else
-        error "Failed to download hosts file from Gist"
-    fi
-}
-
-# ── Cleanup old files ─────────────────────────────────────────────────────────
-cleanup_old_files() {
-    rm -rf "$HOME/.zsh/zsh-autosuggestions" \
-           "$HOME/.zsh/zsh-syntax-highlighting" \
-           "$HOME/.zsh/zsh-history-substring-search"
-    if [[ "$RUN_NVIM" == true && "$RUN_DOTGIT" == false ]]; then
-        rm -rf "$HOME/.config/nvim"
-    fi
-    if [[ "$RUN_FASTFETCH" == true && "$RUN_DOTGIT" == false ]]; then
-        rm -f "$HOME/.config/fastfetch/config.jsonc"
-    fi
-}
-cleanup_old_files
-
-# ── Setup Functions ───────────────────────────────────────────────────────────
-setup_dotgit() {
-    info "Setting up bare dotfiles repository..."
-    if [[ ! -d "$HOME/dotfiles" ]]; then
-        mkdir -p "$HOME/dotfiles"
-        git clone --bare https://github.com/gkuba/dotfiles.git "$HOME/dotfiles"
-        success "Cloned bare repository"
-    else
-        warn "Bare repo already exists"
-    fi
-    dotgit config --local status.showUntrackedFiles no
-}
-
-setup_zsh() {
-    info "Installing Zsh plugins..."
-    mkdir -p "$HOME/.zsh"
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.zsh/zsh-autosuggestions" 2>/dev/null || true
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.zsh/zsh-syntax-highlighting" 2>/dev/null || true
-    git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search.git "$HOME/.zsh/zsh-history-substring-search" 2>/dev/null || true
-    success "Zsh plugins installed"
-}
-
-setup_nvim() {
-    info "Setting up Neovim..."
-    mkdir -p "$HOME/.config/nvim"
-    if [[ "$RUN_DOTGIT" == false ]]; then
-        curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua \
-            -o "$HOME/.config/nvim/init.lua"
-        success "Downloaded init.lua"
-    else
-        dotgit checkout -f
-        success "Neovim config pulled via dotgit"
-    fi
-}
-
-setup_fastfetch() {
-    info "Setting up fastfetch..."
-    mkdir -p "$HOME/.config/fastfetch"
-    if [[ "$RUN_DOTGIT" == false ]]; then
-        curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc \
-            -o "$HOME/.config/fastfetch/config.jsonc"
-        success "Downloaded fastfetch config"
-    else
-        dotgit checkout -f
-        success "Fastfetch config pulled via dotgit"
-    fi
-}
-
-setup_starship() {
-    info "Installing Starship..."
-    sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
-    mkdir -p "$HOME/.config"
-    case "$HOSTNAME" in
-        pixel) url="pixel-starship.toml" ;;
-        *pi*|pixelshed) url="pi-starship.toml" ;;
-        *) url="starship.toml" ;;
-    esac
-    curl -sS "https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$url" \
-        -o "$HOME/.config/starship.toml"
-    success "Starship installed and configured"
-}
-
-# ── Main Execution ─────────────────────────────────────────────────────────────
-[[ "$RUN_DOTGIT" == true ]]    && setup_dotgit
-[[ "$RUN_ZSH" == true ]]       && setup_zsh
-[[ "$RUN_NVIM" == true ]]      && setup_nvim
-[[ "$RUN_FASTFETCH" == true ]] && setup_fastfetch
-[[ "$RUN_STARSHIP" == true ]]  && setup_starship
-[[ "$RUN_HOSTS" == true ]]     && updateHostsFile
-
-# Change shell if requested
-if [[ "$CHANGE_TO_ZSH" == true ]]; then
-    info "Changing default shell to Zsh..."
-    chsh -s "$(command -v zsh)"
-    success "Default shell changed to Zsh. Please log out and back in."
-fi
-
-echo
-success "========================================"
-success " Setup completed successfully! "
-success "========================================"
-
-if [[ "$CHANGE_TO_ZSH" == true ]]; then
-    echo -e "${YELLOW}Note: Log out and log back in (or reboot) to use Zsh.${RESET}"
-fi
+exit 0
