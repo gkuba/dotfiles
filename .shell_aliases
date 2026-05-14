@@ -32,6 +32,9 @@ alias rm='rm -Iv'
 alias cp='cp -iv'
 alias mv='mv -iv'
 
+# AMP alias
+alias amp='sudo su -l amp'
+
 # Debian-based shortcuts
 if command -v nala >/dev/null 2>&1; then
     alias apt='nala'
