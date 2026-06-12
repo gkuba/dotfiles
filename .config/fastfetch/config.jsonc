@@ -1,87 +1,98 @@
-// Inspired by Catnap
 {
-    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
-    "logo": {
-        "type": "none"
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "kitty-direct",
+    "source": "~/.config/fastfetch/images/stencil.png",
+    "height": 17,
+    "width": 34,
+    "recache": true
+  },
+  "display": {
+    "separator": " 󰑃  "
+  },
+  "modules": [
+    {
+      "type": "custom",
+      "format": "╭────  System ─────────────────────────────────────────────╮"
     },
-    "display": {
-        "separator": " "
+    {
+      "type": "title",
+      "key": "  Hostname",
+      "format": "{host-name}"
     },
-    "modules": [
-        {
-            "key": "╭───────────╮",
-            "type": "custom"
-        },
-        {
-            "key": "│ {#31} user    {#keys}│",
-            "type": "title",
-            "format": "{user-name}"
-        },
-        {
-            "key": "│ {#32}󰇅 hname   {#keys}│",
-            "type": "title",
-            "format": "{host-name}"
-        },
-        {
-            "key": "│ {#33}󰅐 uptime  {#keys}│",
-            "type": "uptime"
-        },
-        {
-            "key": "│ {#34}{icon} distro  {#keys}│",
-            "type": "os"
-        },
-        {
-            "key": "│ {#35} kernel  {#keys}│",
-            "type": "kernel"
-        },
-        {
-            "key": "│ {#36}󰇄 desktop {#keys}│",
-            "type": "de"
-        },
-        {
-            "key": "│ {#31} term    {#keys}│",
-            "type": "terminal"
-        },
-        {
-            "key": "│ {#32} shell   {#keys}│",
-            "type": "shell"
-        },
-        {
-            "key": "│ {#33}󰍛 cpu     {#keys}│",
-            "type": "cpu",
-            "showPeCoreCount": true
-        },
-        {
-            "key": "│ {#34}󰉉 root    {#keys}│",
-            "type": "disk",
-            "folders": "/"
-        },
-        {
-            "key": "│ {#34}󰉉 games   {#keys}│",
-            "type": "disk",
-            "folders": "/games"
-        },
-        {
-            "key": "│ {#35} memory  {#keys}│",
-            "type": "memory"
-        },
-        {
-            "key": "│ {#36}󰩟 network {#keys}│",
-            "type": "localip",
-            "format": "{ipv4} ({ifname})"
-        },
-        {
-            "key": "├───────────┤",
-            "type": "custom"
-        },
-        {
-            "key": "│ {#39} colors  {#keys}│",
-            "type": "colors",
-            "symbol": "circle"
-        },
-        {
-            "key": "╰───────────╯",
-            "type": "custom"
-        }
-    ]
+    {
+      "type": "title",
+      "key": "  User    ",
+      "format": "{user-name}"
+    },
+    {
+      "type": "os",
+      "key": "  OS      "
+    },
+    {
+      "type": "de",
+      "key": "  DE      "
+    },
+    {
+      "type": "terminal",
+      "key": "  Terminal"
+    },
+    {
+      "type": "shell",
+      "key": "  Shell   "
+    },
+    {
+      "type": "custom",
+      "format": "╰──────────────────────────────────────────────────────────╯"
+    },
+    {
+      "type": "custom",
+      "format": "╭────  Hardware ───────────────────────────────────────────╮"
+    },
+    {
+      "type": "board",
+      "key": "  Mobo    "
+    },
+    {
+      "type": "cpu",
+      "key": "  CPU     "
+    },
+    {
+      "type": "gpu",
+      "key": "  GPU     "
+    },
+    {
+      "type": "memory",
+      "key": "  Memory  "
+    },
+    {
+      "type": "disk",
+      "key": "  Root    ",
+      "folders": "/",
+      "format": "{size-used} / {size-total} ({size-percentage})"
+    },
+    {
+      "type": "disk",
+      "key": "  Games   ",
+      "folders": "/games",
+      "format": "{size-used} / {size-total} ({size-percentage})"
+    },
+    {
+      "type": "localip",
+      "key": "  Network ",
+      "format": "{ipv4}"
+    },
+    {
+      "type": "uptime",
+      "key": "  Uptime  "
+    },
+    {
+      "type": "custom",
+      "format": "╰──────────────────────────────────────────────────────────╯"
+    },
+    {
+      "type": "colors",
+      "symbol": "circle"
+    }
+  ]
 }
