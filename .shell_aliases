@@ -53,13 +53,3 @@ fi
 # ── Custom function aliases ────────────────────────────────
 alias whatismyip="whatsmyip"
 alias wi="whatsmyip"                    # short version
-
-# ── Pacman / Paru shortcuts ────────────────────────────────
-alias p='pacman'
-alias pa='paru'
-
-# Quick common actions
-alias pup='pacman update'               # sync repos only
-alias pug='pacman upgrade'              # upgrade official packages
-alias paug='paru upgrade'               # upgrade everything (AUR too)
-alias paa='paru autoremove'             # remove orphans via paru

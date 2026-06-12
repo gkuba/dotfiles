@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Dotfiles Setup Script - Interactive
+# Dotfiles Setup Script - Interactive & Streamlined
 # =============================================================================
 set -euo pipefail
 
@@ -77,10 +77,10 @@ fi
 
 echo
 echo -e "${CYAN}The following actions will be performed:${RESET}"
-[[ "$RUN_DOTGIT" == true ]]    && echo " • Setup bare git repository"
-[[ "$RUN_ZSH" == true ]]       && echo " • Install Zsh plugins"
-[[ "$RUN_NVIM" == true ]]      && echo " • Setup Neovim config"
-[[ "$RUN_FASTFETCH" == true ]] && echo " • Setup fastfetch config"
+[[ "$RUN_DOTGIT" == true ]]    && echo " • Setup bare git repository & pull all configs"
+[[ "$RUN_ZSH" == true ]]       && echo " • Install/Update Zsh plugins"
+[[ "$RUN_NVIM" == true ]]      && echo " • Setup Neovim config (standalone curl fallback)"
+[[ "$RUN_FASTFETCH" == true ]] && echo " • Setup fastfetch config (standalone curl fallback)"
 [[ "$RUN_STARSHIP" == true ]]  && echo " • Install Starship + theme"
 [[ "$RUN_HOSTS" == true ]]     && echo " • Update /etc/hosts from Gist"
 
@@ -132,12 +132,12 @@ updateHostsFile() {
     # Download gist and append (skip localhost lines to prevent duplicates)
     if sudo curl -fsSL https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/3c1ea40b581072ba0218140d4ceff47a55744b3c/gistfile1.txt \
         -o /tmp/hosts-gist.tmp; then
-        
+
         echo -e "\n# === Custom hosts from GitHub Gist (added $(date)) ===" | sudo tee -a /etc/hosts > /dev/null
-        
+
         sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
             sudo tee -a /etc/hosts > /dev/null
-        
+
         rm -f /tmp/hosts-gist.tmp
         success "/etc/hosts updated successfully (custom entries appended)"
     else
@@ -145,11 +145,8 @@ updateHostsFile() {
     fi
 }
 
-# ── Cleanup old files ─────────────────────────────────────────────────────────
+# ── Cleanup old standalone files (Only triggers if bare repository isn't active) ─
 cleanup_old_files() {
-    rm -rf "$HOME/.zsh/zsh-autosuggestions" \
-           "$HOME/.zsh/zsh-syntax-highlighting" \
-           "$HOME/.zsh/zsh-history-substring-search"
     if [[ "$RUN_NVIM" == true && "$RUN_DOTGIT" == false ]]; then
         rm -rf "$HOME/.config/nvim"
     fi
@@ -167,43 +164,65 @@ setup_dotgit() {
         git clone --bare https://github.com/gkuba/dotfiles.git "$HOME/dotfiles"
         success "Cloned bare repository"
     else
-        warn "Bare repo already exists"
+        warn "Bare repo folder already exists."
     fi
+
     dotgit config --local status.showUntrackedFiles no
+
+    # Safe Checkout Strategy: Gracefully move existing system skeleton files aside
+    if ! dotgit checkout 2>/dev/null; then
+        warn "Pre-existing files detected. Moving structural conflicts to backup stash..."
+        mkdir -p "$HOME/.dotfiles-backup"
+        dotgit checkout 2>&1 | grep -E "^\s" | awk '{print $1}' | while read -r conflicting_file; do
+            if [[ -f "$HOME/$conflicting_file" ]]; then
+                mkdir -p "$HOME/.dotfiles-backup/$(dirname "$conflicting_file")"
+                mv "$HOME/$conflicting_file" "$HOME/.dotfiles-backup/$conflicting_file"
+            fi
+        done
+        dotgit checkout
+    fi
+    success "Dotfiles verified and fully deployed via Bare Repository"
 }
 
 setup_zsh() {
-    info "Installing Zsh plugins..."
+    info "Syncing Zsh plugins..."
     mkdir -p "$HOME/.zsh"
-    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.zsh/zsh-autosuggestions" 2>/dev/null || true
-    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.zsh/zsh-syntax-highlighting" 2>/dev/null || true
-    git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search.git "$HOME/.zsh/zsh-history-substring-search" 2>/dev/null || true
-    success "Zsh plugins installed"
+
+    local plugins=(
+        "zsh-users/zsh-autosuggestions"
+        "zsh-users/zsh-syntax-highlighting"
+        "zsh-users/zsh-history-substring-search"
+    )
+
+    for plugin in "${plugins[@]}"; do
+        local name="${plugin##*/}"
+        local target="$HOME/.zsh/$name"
+        if [[ ! -d "$target" ]]; then
+            git clone --depth=1 "https://github.com/$plugin.git" "$target"
+        else
+            git -C "$target" pull --ff-only
+        fi
+    done
+    success "Zsh plugins configured"
 }
 
 setup_nvim() {
-    info "Setting up Neovim..."
-    mkdir -p "$HOME/.config/nvim"
     if [[ "$RUN_DOTGIT" == false ]]; then
+        info "Setting up Neovim (Standalone Mode)..."
+        mkdir -p "$HOME/.config/nvim"
         curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua \
             -o "$HOME/.config/nvim/init.lua"
-        success "Downloaded init.lua"
-    else
-        dotgit checkout -f
-        success "Neovim config pulled via dotgit"
+        success "Downloaded init.lua standalone"
     fi
 }
 
 setup_fastfetch() {
-    info "Setting up fastfetch..."
-    mkdir -p "$HOME/.config/fastfetch"
     if [[ "$RUN_DOTGIT" == false ]]; then
+        info "Setting up fastfetch (Standalone Mode)..."
+        mkdir -p "$HOME/.config/fastfetch"
         curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc \
             -o "$HOME/.config/fastfetch/config.jsonc"
-        success "Downloaded fastfetch config"
-    else
-        dotgit checkout -f
-        success "Fastfetch config pulled via dotgit"
+        success "Downloaded fastfetch config standalone"
     fi
 }
 
@@ -211,14 +230,19 @@ setup_starship() {
     info "Installing Starship..."
     sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
     mkdir -p "$HOME/.config"
-    case "$HOSTNAME" in
+
+    local actual_hostname=$(uname -n)
+    local url=""
+
+    case "$actual_hostname" in
         pixel) url="pixel-starship.toml" ;;
         *pi*|pixelshed) url="pi-starship.toml" ;;
         *) url="starship.toml" ;;
     esac
+
     curl -sS "https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$url" \
         -o "$HOME/.config/starship.toml"
-    success "Starship installed and configured"
+    success "Starship installed and configured for node: $actual_hostname"
 }
 
 # ── Main Execution ─────────────────────────────────────────────────────────────
@@ -229,12 +253,22 @@ setup_starship() {
 [[ "$RUN_STARSHIP" == true ]]  && setup_starship
 [[ "$RUN_HOSTS" == true ]]     && updateHostsFile
 
-# Change shell if requested
+# ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
 if [[ "$CHANGE_TO_ZSH" == true ]]; then
-    info "Changing default shell to Zsh..."
-    chsh -s /usr/bin/zsh "$USER"
-    success "Default shell changed to Zsh."
-    echo -e "${YELLOW}Note: Please log out and log back in (or reboot) for Zsh to become your default shell.${RESET}"
+    echo
+    info "Updating default user shell account space to /usr/bin/zsh..."
+
+    target_user=$(whoami)
+
+    # Execute natively without blind sudo profile masks
+    if chsh -s /usr/bin/zsh "$target_user"; then
+        success "Default user login shell mapped to Zsh successfully!"
+        echo -e "${YELLOW}Note: Please log out and log back in (or reboot) for Zsh to fully take effect.${RESET}"
+    else
+        error "Failed to modify shell access database dynamically. Trying fallback entry..."
+        sudo chsh -s /usr/bin/zsh "$target_user"
+        success "Default shell fallback successfully updated to Zsh via sudo."
+    fi
 fi
 
 echo

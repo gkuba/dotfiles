@@ -3,49 +3,49 @@
 ##-------------------------------------------------------------
 
 # Reset
-ENDCOLOR="\e[0m"
+ENDCOLOR="\033[0m"
 
 # ── Basic ANSI Colors ───────────────────────────────────────
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-BLUE="\e[34m"
-MAGENTA="\e[35m"
-CYAN="\e[36m"
-WHITE="\e[37m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+BLUE="\033[34m"
+MAGENTA="\033[35m"
+CYAN="\033[36m"
+WHITE="\033[37m"
 
 # Bright/Bold versions
-BRED="\e[1;31m"
-BGREEN="\e[1;32m"
-BYELLOW="\e[1;33m"
-BBLUE="\e[1;34m"
-BMAGENTA="\e[1;35m"
-BCYAN="\e[1;36m"
-BWHITE="\e[1;37m"
+BRED="\033[1;31m"
+BGREEN="\033[1;32m"
+BYELLOW="\033[1;33m"
+BBLUE="\033[1;34m"
+BMAGENTA="\033[1;35m"
+BCYAN="\033[1;36m"
+BWHITE="\033[1;37m"
 
 # Italic versions
-ITALICRED="\e[3;31m"
-ITALICGREEN="\e[3;32m"
-ITALICYELLOW="\e[3;33m"
-ITALICBLUE="\e[3;34m"
-ITALICMAGENTA="\e[3;35m"
-ITALICCYAN="\e[3;36m"
+ITALICRED="\033[3;31m"
+ITALICGREEN="\033[3;32m"
+ITALICYELLOW="\033[3;33m"
+ITALICBLUE="\033[3;34m"
+ITALICMAGENTA="\033[3;35m"
+ITALICCYAN="\033[3;36m"
 
 # ── Full Official Dracula Theme Palette ─────────────────────
 # Source: https://draculatheme.com/spec
 
-DRACULA_BACKGROUND="\e[38;5;235m"   # #282A36
-DRACULA_CURRENT_LINE="\e[38;5;60m"  # #44475A (also used as selection)
-DRACULA_FOREGROUND="\e[38;5;253m"   # #F8F8F2
-DRACULA_COMMENT="\e[38;5;60m"       # #6272A4
+DRACULA_BACKGROUND="\033[38;5;235m"   # #282A36
+DRACULA_CURRENT_LINE="\033[38;5;60m"  # #44475A (also used as selection)
+DRACULA_FOREGROUND="\033[38;5;253m"   # #F8F8F2
+DRACULA_COMMENT="\033[38;5;60m"       # #6272A4
 
-DRACULA_RED="\e[38;5;203m"          # #FF5555
-DRACULA_ORANGE="\e[38;5;215m"       # #FFB86C
-DRACULA_YELLOW="\e[38;5;228m"       # #F1FA8C
-DRACULA_GREEN="\e[38;5;84m"         # #50FA7B
-DRACULA_CYAN="\e[38;5;87m"          # #8BE9FD
-DRACULA_PURPLE="\e[38;5;141m"       # #BD93F9
-DRACULA_PINK="\e[38;5;212m"         # #FF79C6
+DRACULA_RED="\033[38;5;203m"          # #FF5555
+DRACULA_ORANGE="\033[38;5;215m"       # #FFB86C
+DRACULA_YELLOW="\033[38;5;228m"       # #F1FA8C
+DRACULA_GREEN="\033[38;5;84m"         # #50FA7B
+DRACULA_CYAN="\033[38;5;87m"          # #8BE9FD
+DRACULA_PURPLE="\033[38;5;141m"       # #BD93F9
+DRACULA_PINK="\033[38;5;212m"         # #FF79C6
 
 # Short aliases for common use (matching your old style)
 PURPLE="${DRACULA_PURPLE}"
@@ -55,6 +55,6 @@ LIME="${DRACULA_GREEN}"
 TEAL="${DRACULA_CYAN}"
 
 # Bold Dracula variants
-BPURPLE="\e[1;38;5;141m"
-BPINK="\e[1;38;5;212m"
-BGREEN="\e[1;38;5;84m"
+BPURPLE="\033[1;38;5;141m"
+BPINK="\033[1;38;5;212m"
+BGREEN="\033[1;38;5;84m"

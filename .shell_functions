@@ -41,11 +41,12 @@ netinfo() {
         }
     '
 
-    # MAC Addresses
+    # MAC Addresses (Cleaned Trailing Interface Colons)
     ip link show | awk '
         /link\/ether/ {
             interface = $2
             mac = $3
+            gsub(/:/, "", interface)
             gsub(/:/, "", mac)
             printf "MACAddr:  %s (%s)\n", mac, interface
         }
@@ -89,37 +90,43 @@ pacman() {
     case "$1" in
         update)
             echo "→ Syncing package databases..."
-            command sudo pacman -Sy "${@:2}" ;;
+            sudo /usr/bin/pacman -Sy "${@:2}" ;;
 
         upgrade)
             echo "→ Upgrading installed packages..."
-            command sudo pacman -Su "${@:2}" ;;
+            sudo /usr/bin/pacman -Su "${@:2}" ;;
 
         install)
-            command sudo pacman -S "${@:2}" ;;
+            sudo /usr/bin/pacman -S "${@:2}" ;;
 
         remove)
-            command sudo pacman -Rns "${@:2}" ;;
+            sudo /usr/bin/pacman -Rns "${@:2}" ;;
 
         autoremove)
             echo "→ Removing orphan packages..."
-            command sudo pacman -Rns $(pacman -Qdtq) ;;
+            local orphans=$(/usr/bin/pacman -Qdtq)
+            if [ -n "$orphans" ]; then
+                sudo /usr/bin/pacman -Rns $orphans
+            else
+                echo "✓ No orphan packages found to clear."
+            fi
+            ;;
 
         search)
-            command pacman -Ss "${@:2}" ;;
+            /usr/bin/pacman -Ss "${@:2}" ;;
 
         info)
-            command pacman -Si "${@:2}" ;;
+            /usr/bin/pacman -Si "${@:2}" ;;
 
         clean)
-            command sudo pacman -Sc "${@:2}" ;;
+            sudo /usr/bin/pacman -Sc "${@:2}" ;;
 
         orphans)
-            command pacman -Qdtq ;;
+            /usr/bin/pacman -Qdtq ;;
 
         fix)
             echo "→ Forcing database refresh and upgrading..."
-            command sudo pacman -Syyu "${@:2}" ;;
+            sudo /usr/bin/pacman -Syyu "${@:2}" ;;
 
         help|--help|-h)
             echo "pacman wrapper (Nala-style)"
@@ -141,10 +148,10 @@ pacman() {
             ;;
 
         --real-help)
-            command pacman --help ;;
+            /usr/bin/pacman --help ;;
 
         *)
-            command sudo pacman --color always "$@" ;;
+            sudo /usr/bin/pacman --color always "$@" ;;
     esac
 }
 
@@ -152,40 +159,48 @@ pacman() {
 # Nala-style paru wrapper (AUR + official repos)
 # =============================================
 paru() {
+    local paru_bin=$(command -v paru 2>/dev/null || echo "/usr/bin/paru")
+
     case "$1" in
         update)
             echo "→ Syncing package databases (official + AUR)..."
-            command paru -Sy "${@:2}" ;;
+            $paru_bin -Sy "${@:2}" ;;
 
         upgrade)
             echo "→ Upgrading all packages (official + AUR)..."
-            command paru -Syu "${@:2}" ;;
+            $paru_bin -Syu "${@:2}" ;;
 
         install)
-            command paru -S "${@:2}" ;;
+            $paru_bin -S "${@:2}" ;;
 
         remove)
-            command paru -Rns "${@:2}" ;;
+            $paru_bin -Rns "${@:2}" ;;
 
         autoremove)
             echo "→ Removing orphan packages..."
-            command paru -Rns $(paru -Qdtq) ;;
+            local orphans=$($paru_bin -Qdtq)
+            if [ -n "$orphans" ]; then
+                $paru_bin -Rns $orphans
+            else
+                echo "✓ No AUR/Core orphan packages found to clear."
+            fi
+            ;;
 
         search)
-            command paru -Ss "${@:2}" ;;
+            $paru_bin -Ss "${@:2}" ;;
 
         info)
-            command paru -Si "${@:2}" ;;
+            $paru_bin -Si "${@:2}" ;;
 
         clean)
-            command paru -Sc "${@:2}" ;;
+            $paru_bin -Sc "${@:2}" ;;
 
         orphans)
-            command paru -Qdtq ;;
+            $paru_bin -Qdtq ;;
 
         fix)
             echo "→ Forcing database refresh and upgrading everything..."
-            command paru -Syyu "${@:2}" ;;
+            $paru_bin -Syyu "${@:2}" ;;
 
         help|--help|-h)
             echo "paru wrapper (Nala-style)"
@@ -207,9 +222,9 @@ paru() {
             ;;
 
         --real-help)
-            command paru --help ;;
+            $paru_bin --help ;;
 
         *)
-            command paru --color always "$@" ;;
+            $paru_bin --color always "$@" ;;
     esac
 }
