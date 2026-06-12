@@ -90,43 +90,43 @@ pacman() {
     case "$1" in
         update)
             echo "→ Syncing package databases..."
-            sudo /usr/bin/pacman -Sy "${@:2}" ;;
+            sudo command pacman -Sy "${@:2}" ;;
 
         upgrade)
             echo "→ Upgrading installed packages..."
-            sudo /usr/bin/pacman -Su "${@:2}" ;;
+            sudo command pacman -Su "${@:2}" ;;
 
         install)
-            sudo /usr/bin/pacman -S "${@:2}" ;;
+            sudo command pacman -S "${@:2}" ;;
 
         remove)
-            sudo /usr/bin/pacman -Rns "${@:2}" ;;
+            sudo command pacman -Rns "${@:2}" ;;
 
         autoremove)
             echo "→ Removing orphan packages..."
-            local orphans=$(/usr/bin/pacman -Qdtq)
+            local orphans=$(command pacman -Qdtq)
             if [ -n "$orphans" ]; then
-                sudo /usr/bin/pacman -Rns $orphans
+                sudo command pacman -Rns $orphans
             else
                 echo "✓ No orphan packages found to clear."
             fi
             ;;
 
         search)
-            /usr/bin/pacman -Ss "${@:2}" ;;
+            command pacman -Ss "${@:2}" ;;
 
         info)
-            /usr/bin/pacman -Si "${@:2}" ;;
+            command pacman -Si "${@:2}" ;;
 
         clean)
-            sudo /usr/bin/pacman -Sc "${@:2}" ;;
+            sudo command pacman -Sc "${@:2}" ;;
 
         orphans)
-            /usr/bin/pacman -Qdtq ;;
+            command pacman -Qdtq ;;
 
         fix)
             echo "→ Forcing database refresh and upgrading..."
-            sudo /usr/bin/pacman -Syyu "${@:2}" ;;
+            sudo command pacman -Syyu "${@:2}" ;;
 
         help|--help|-h)
             echo "pacman wrapper (Nala-style)"
@@ -148,10 +148,10 @@ pacman() {
             ;;
 
         --real-help)
-            /usr/bin/pacman --help ;;
+            command pacman --help ;;
 
         *)
-            sudo /usr/bin/pacman --color always "$@" ;;
+            sudo command pacman --color always "$@" ;;
     esac
 }
 
@@ -159,48 +159,46 @@ pacman() {
 # Nala-style paru wrapper (AUR + official repos)
 # =============================================
 paru() {
-    local paru_bin=$(command -v paru 2>/dev/null || echo "/usr/bin/paru")
-
     case "$1" in
         update)
             echo "→ Syncing package databases (official + AUR)..."
-            $paru_bin -Sy "${@:2}" ;;
+            command paru -Sy "${@:2}" ;;
 
         upgrade)
             echo "→ Upgrading all packages (official + AUR)..."
-            $paru_bin -Syu "${@:2}" ;;
+            command paru -Syu "${@:2}" ;;
 
         install)
-            $paru_bin -S "${@:2}" ;;
+            command paru -S "${@:2}" ;;
 
         remove)
-            $paru_bin -Rns "${@:2}" ;;
+            command paru -Rns "${@:2}" ;;
 
         autoremove)
             echo "→ Removing orphan packages..."
-            local orphans=$($paru_bin -Qdtq)
+            local orphans=$(command paru -Qdtq)
             if [ -n "$orphans" ]; then
-                $paru_bin -Rns $orphans
+                command paru -Rns $orphans
             else
                 echo "✓ No AUR/Core orphan packages found to clear."
             fi
             ;;
 
         search)
-            $paru_bin -Ss "${@:2}" ;;
+            command paru -Ss "${@:2}" ;;
 
         info)
-            $paru_bin -Si "${@:2}" ;;
+            command paru -Si "${@:2}" ;;
 
         clean)
-            $paru_bin -Sc "${@:2}" ;;
+            command paru -Sc "${@:2}" ;;
 
         orphans)
-            $paru_bin -Qdtq ;;
+            command paru -Qdtq ;;
 
         fix)
             echo "→ Forcing database refresh and upgrading everything..."
-            $paru_bin -Syyu "${@:2}" ;;
+            command paru -Syyu "${@:2}" ;;
 
         help|--help|-h)
             echo "paru wrapper (Nala-style)"
@@ -222,9 +220,9 @@ paru() {
             ;;
 
         --real-help)
-            $paru_bin --help ;;
+            command paru --help ;;
 
         *)
-            $paru_bin --color always "$@" ;;
+            command paru --color always "$@" ;;
     esac
 }
