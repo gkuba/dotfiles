@@ -107,6 +107,19 @@ if [[ "$RUN_HOSTS" == false ]]; then
     fi
 fi
 
+# ── Wallpaper Setup Prompt (Conditional on Bare Repo pull) ────────────────────
+KEEP_WALLPAPERS=false
+if [[ "$RUN_DOTGIT" == true ]]; then
+    echo
+    read -r -p "Keep Wallpapers from dotfiles repo and symlink to ~/Pictures/Wallpapers? (y/N): " choice_wallpapers
+    if [[ "$choice_wallpapers" =~ ^[Yy]$ ]]; then
+        KEEP_WALLPAPERS=true
+        echo -e "${GREEN}→ Will keep and map Wallpapers directory${RESET}"
+    else
+        echo -e "${RED}→ Will purge ~/Wallpapers directory post-clone${RESET}"
+    fi
+fi
+
 echo
 read -r -p "Press [Enter] to proceed with setup, or type 'Q' to quit: " confirm
 if [[ "$confirm" =~ ^[Qq]$ ]]; then
@@ -138,7 +151,7 @@ updateHostsFile() {
         sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
             sudo tee -a /etc/hosts > /dev/null
 
-        rm -f /tmp/hosts-gist.tmp
+        sudo rm -f /tmp/hosts-gist.tmp
         success "/etc/hosts updated successfully (custom entries appended)"
     else
         error "Failed to download hosts file from Gist"
@@ -252,6 +265,40 @@ setup_starship() {
 [[ "$RUN_FASTFETCH" == true ]] && setup_fastfetch
 [[ "$RUN_STARSHIP" == true ]]  && setup_starship
 [[ "$RUN_HOSTS" == true ]]     && updateHostsFile
+
+# ── Post-Checkout Wallpaper Processing ─────────────────────────────────────────
+if [[ "$RUN_DOTGIT" == true ]]; then
+    local wallpapers_source="$HOME/Wallpapers"
+    local pictures_dir="$HOME/Pictures"
+    local target_link="$pictures_dir/Wallpapers"
+
+    if [[ "$KEEP_WALLPAPERS" == true ]]; then
+        if [[ -d "$wallpapers_source" ]]; then
+            info "Processing Wallpaper assets and handling symlink mapping..."
+            mkdir -p "$pictures_dir"
+
+            # Check and clear conflicting target paths safely
+            if [[ -L "$target_link" ]]; then
+                rm "$target_link"
+            elif [[ -d "$target_link" ]]; then
+                warn "Physical path exists at $target_link. Stashing to $target_link.bak..."
+                mv "$target_link" "${target_link}.bak"
+            fi
+
+            ln -s "$wallpapers_source" "$target_link"
+            success "Wallpapers systematically mapped to $target_link"
+        else
+            warn "Wallpaper configuration was flagged, but ~/Wallpapers directory wasn't deployed by Git."
+        fi
+    else
+        # Purge the directory if user explicitly declined keeping them
+        if [[ -d "$wallpapers_source" ]]; then
+            info "Purging local source folder asset files from home tree..."
+            rm -rf "$wallpapers_source"
+            success "Unused ~/Wallpapers storage cleared cleanly"
+        fi
+    fi
+fi
 
 # ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
 if [[ "$CHANGE_TO_ZSH" == true ]]; then
