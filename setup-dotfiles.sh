@@ -151,7 +151,7 @@ updateHostsFile() {
         sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
             sudo tee -a /etc/hosts > /dev/null
 
-        rm -f /tmp/hosts-gist.tmp
+        sudo rm -f /tmp/hosts-gist.tmp
         success "/etc/hosts updated successfully (custom entries appended)"
     else
         error "Failed to download hosts file from Gist"
