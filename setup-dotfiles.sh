@@ -151,7 +151,7 @@ updateHostsFile() {
         sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
             sudo tee -a /etc/hosts > /dev/null
 
-        sudo rm -f /tmp/hosts-gist.tmp
+        rm -f /tmp/hosts-gist.tmp
         success "/etc/hosts updated successfully (custom entries appended)"
     else
         error "Failed to download hosts file from Gist"
@@ -258,16 +258,8 @@ setup_starship() {
     success "Starship installed and configured for node: $actual_hostname"
 }
 
-# ── Main Execution ─────────────────────────────────────────────────────────────
-[[ "$RUN_DOTGIT" == true ]]    && setup_dotgit
-[[ "$RUN_ZSH" == true ]]       && setup_zsh
-[[ "$RUN_NVIM" == true ]]      && setup_nvim
-[[ "$RUN_FASTFETCH" == true ]] && setup_fastfetch
-[[ "$RUN_STARSHIP" == true ]]  && setup_starship
-[[ "$RUN_HOSTS" == true ]]     && updateHostsFile
-
-# ── Post-Checkout Wallpaper Processing ─────────────────────────────────────────
-if [[ "$RUN_DOTGIT" == true ]]; then
+# ── Consistent Wallpaper Setup Function ───────────────────────────────────────
+setup_wallpapers() {
     local wallpapers_source="$HOME/Wallpapers"
     local pictures_dir="$HOME/Pictures"
     local target_link="$pictures_dir/Wallpapers"
@@ -298,7 +290,18 @@ if [[ "$RUN_DOTGIT" == true ]]; then
             success "Unused ~/Wallpapers storage cleared cleanly"
         fi
     fi
-fi
+}
+
+# ── Main Execution ─────────────────────────────────────────────────────────────
+[[ "$RUN_DOTGIT" == true ]]    && setup_dotgit
+[[ "$RUN_ZSH" == true ]]       && setup_zsh
+[[ "$RUN_NVIM" == true ]]      && setup_nvim
+[[ "$RUN_FASTFETCH" == true ]] && setup_fastfetch
+[[ "$RUN_STARSHIP" == true ]]  && setup_starship
+[[ "$RUN_HOSTS" == true ]]     && updateHostsFile
+
+# Safely fire wallpaper logic using the updated function name
+[[ "$RUN_DOTGIT" == true ]]    && setup_wallpapers
 
 # ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
 if [[ "$CHANGE_TO_ZSH" == true ]]; then
