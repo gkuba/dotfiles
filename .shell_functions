@@ -90,44 +90,44 @@ pacman() {
     case "$1" in
         update)
             echo "→ Syncing package databases..."
-            sudo command pacman -Sy "${@:2}" ;;
-
+            sudo /usr/bin/pacman -Sy ${@:2} ;;
         upgrade)
             echo "→ Upgrading installed packages..."
-            sudo command pacman -Su "${@:2}" ;;
-
+            sudo /usr/bin/pacman -Su ${@:2} ;;
         install)
-            sudo command pacman -S "${@:2}" ;;
-
+            if [ -z "${2:-}" ]; then
+                echo -e "\033[31m[ERROR]\033[0m No packages specified for installation." >&2
+                echo "Usage: pacman install <package_name>"
+                return 1
+            fi
+            sudo /usr/bin/pacman -S ${@:2} ;;
         remove)
-            sudo command pacman -Rns "${@:2}" ;;
-
+            if [ -z "${2:-}" ]; then
+                echo -e "\033[31m[ERROR]\033[0m No packages specified for removal." >&2
+                echo "Usage: pacman remove <package_name>"
+                return 1
+            fi
+            sudo /usr/bin/pacman -Rns ${@:2} ;;
         autoremove)
             echo "→ Removing orphan packages..."
-            local orphans=$(command pacman -Qdtq)
-            if [ -n "$orphans" ]; then
-                sudo command pacman -Rns $orphans
+            local orphans=( $(/usr/bin/pacman -Qdtq) )
+            if [ ${#orphans[@]} -gt 0 ]; then
+                sudo /usr/bin/pacman -Rns "${orphans[@]}"
             else
                 echo "✓ No orphan packages found to clear."
             fi
             ;;
-
         search)
-            command pacman -Ss "${@:2}" ;;
-
+            /usr/bin/pacman -Ss ${@:2} ;;
         info)
-            command pacman -Si "${@:2}" ;;
-
+            /usr/bin/pacman -Si ${@:2} ;;
         clean)
-            sudo command pacman -Sc "${@:2}" ;;
-
+            sudo /usr/bin/pacman -Sc ${@:2} ;;
         orphans)
-            command pacman -Qdtq ;;
-
+            /usr/bin/pacman -Qdtq ;;
         fix)
             echo "→ Forcing database refresh and upgrading..."
-            sudo command pacman -Syyu "${@:2}" ;;
-
+            sudo /usr/bin/pacman -Syyu ${@:2} ;;
         help|--help|-h)
             echo "pacman wrapper (Nala-style)"
             echo "==========================="
@@ -146,12 +146,10 @@ pacman() {
             echo "Use 'pacman --real-help' for original pacman help"
             return 0
             ;;
-
         --real-help)
-            command pacman --help ;;
-
+            /usr/bin/pacman --help ;;
         *)
-            sudo command pacman --color always "$@" ;;
+            sudo /usr/bin/pacman --color always "$@" ;;
     esac
 }
 
@@ -162,44 +160,44 @@ paru() {
     case "$1" in
         update)
             echo "→ Syncing package databases (official + AUR)..."
-            command paru -Sy "${@:2}" ;;
-
+            /usr/bin/paru -Sy ${@:2} ;;
         upgrade)
             echo "→ Upgrading all packages (official + AUR)..."
-            command paru -Syu "${@:2}" ;;
-
+            /usr/bin/paru -Syu ${@:2} ;;
         install)
-            command paru -S "${@:2}" ;;
-
+            if [ -z "${2:-}" ]; then
+                echo -e "\033[31m[ERROR]\033[0m No packages specified for installation." >&2
+                echo "Usage: paru install <package_name>"
+                return 1
+            fi
+            /usr/bin/paru -S ${@:2} ;;
         remove)
-            command paru -Rns "${@:2}" ;;
-
+            if [ -z "${2:-}" ]; then
+                echo -e "\033[31m[ERROR]\033[0m No packages specified for removal." >&2
+                echo "Usage: paru remove <package_name>"
+                return 1
+            fi
+            /usr/bin/paru -Rns ${@:2} ;;
         autoremove)
             echo "→ Removing orphan packages..."
-            local orphans=$(command paru -Qdtq)
-            if [ -n "$orphans" ]; then
-                command paru -Rns $orphans
+            local orphans=( $(/usr/bin/paru -Qdtq) )
+            if [ ${#orphans[@]} -gt 0 ]; then
+                /usr/bin/paru -Rns "${orphans[@]}"
             else
                 echo "✓ No AUR/Core orphan packages found to clear."
             fi
             ;;
-
         search)
-            command paru -Ss "${@:2}" ;;
-
+            /usr/bin/paru -Ss ${@:2} ;;
         info)
-            command paru -Si "${@:2}" ;;
-
+            /usr/bin/paru -Si ${@:2} ;;
         clean)
-            command paru -Sc "${@:2}" ;;
-
+            /usr/bin/paru -Sc ${@:2} ;;
         orphans)
-            command paru -Qdtq ;;
-
+            /usr/bin/paru -Qdtq ;;
         fix)
             echo "→ Forcing database refresh and upgrading everything..."
-            command paru -Syyu "${@:2}" ;;
-
+            /usr/bin/paru -Syyu ${@:2} ;;
         help|--help|-h)
             echo "paru wrapper (Nala-style)"
             echo "========================="
@@ -218,11 +216,9 @@ paru() {
             echo "Use 'paru --real-help' for original paru help"
             return 0
             ;;
-
         --real-help)
-            command paru --help ;;
-
+            /usr/bin/paru --help ;;
         *)
-            command paru --color always "$@" ;;
+            /usr/bin/paru --color always "$@" ;;
     esac
 }
