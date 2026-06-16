@@ -107,32 +107,32 @@ if [[ "$RUN_HOSTS" == false ]]; then
     fi
 fi
 
-# ── DE Add-ons Workflow Prompt (Modified Setup) ──────────────────────────────
-INSTALL_DE_ADDONS=false
-KEEP_WALLPAPERS=false
-KEEP_CURSORS=false
+# ── DESetupLinux Asset Workflow Prompt ────────────────────────────────────────
+RUN_DESETUP=false
+WANT_WALLPAPERS=false
+WANT_CURSORS=false
 
 if [[ "$RUN_DOTGIT" == true ]]; then
     echo
-    read -r -p "Would you like to install the Desktop Environment add-on's (wallpapers/cursors)? (y/N): " choice_addons
+    read -r -p "Would you like to install the Desktop Environment add-on's? (y/N): " choice_addons
     if [[ "$choice_addons" =~ ^[Yy]$ ]]; then
-        INSTALL_DE_ADDONS=true
+        RUN_DESETUP=true
         while true; do
             read -r -p "Install [w]allpapers, [c]ursors, or [b]oth?: " addon_type
             case "$addon_type" in
                 [Ww])
-                    KEEP_WALLPAPERS=true
+                    WANT_WALLPAPERS=true
                     echo -e "${GREEN}→ Selected: Wallpapers only${RESET}"
                     break
                     ;;
                 [Cc])
-                    KEEP_CURSORS=true
+                    WANT_CURSORS=true
                     echo -e "${GREEN}→ Selected: Cursors only${RESET}"
                     break
                     ;;
                 [Bb])
-                    KEEP_WALLPAPERS=true
-                    KEEP_CURSORS=true
+                    WANT_WALLPAPERS=true
+                    WANT_CURSORS=true
                     echo -e "${GREEN}→ Selected: Both Wallpapers and Cursors${RESET}"
                     break
                     ;;
@@ -141,8 +141,6 @@ if [[ "$RUN_DOTGIT" == true ]]; then
                     ;;
             esac
         done
-    else
-        echo -e "${RED}→ Will purge ~/Wallpapers and ~/.icons directories post-clone${RESET}"
     fi
 fi
 
@@ -284,52 +282,52 @@ setup_starship() {
     success "Starship installed and configured for node: $actual_hostname"
 }
 
-# ── Desktop Environment Add-ons Engine ───────────────────────────────────────
-setup_de_addons() {
-    local wallpapers_source="$HOME/Wallpapers"
-    local pictures_dir="$HOME/Pictures"
-    local target_link="$pictures_dir/Wallpapers"
-    local icons_dir="$HOME/.icons"
+# ── Desktop Environment Add-ons (DESetupLinux Integration) ─────────────────────
+setup_desetuplinux() {
+    local temp_dir="/tmp/DESetupLinux-scratch"
+    local repo_url="https://github.com/gkuba/DESetupLinux.git"
 
-    # Handle Wallpaper Allocation Logic
-    if [[ "$KEEP_WALLPAPERS" == true ]]; then
-        if [[ -d "$wallpapers_source" ]]; then
-            info "Processing Wallpaper assets and handling symlink mapping..."
-            mkdir -p "$pictures_dir"
+    info "Deploying standalone desktop configuration profile environment..."
 
-            if [[ -L "$target_link" ]]; then
-                rm "$target_link"
-            elif [[ -d "$target_link" ]]; then
-                warn "Physical path exists at $target_link. Stashing to $target_link.bak..."
-                mv "$target_link" "${target_link}.bak"
+    # Pre-clean workspace safely
+    sudo rm -rf "$temp_dir"
+    mkdir -p "$temp_dir"
+
+    # Shallow clone to minimize download overhead
+    if git clone --depth=1 "$repo_url" "$temp_dir"; then
+
+        # Deploy Wallpapers matching layout constraints
+        if [[ "$WANT_WALLPAPERS" == true ]]; then
+            if [[ -d "$temp_dir/Wallpapers" ]]; then
+                info "Extracting Wallpapers module to target storage vector..."
+                mkdir -p "$HOME/Pictures"
+                rm -rf "$HOME/Pictures/Wallpapers"
+                cp -r "$temp_dir/Wallpapers" "$HOME/Pictures/Wallpapers"
+                success "Wallpapers systematically mapped to ~/Pictures/Wallpapers"
+            else
+                warn "Wallpaper installation requested, but 'Wallpapers' missing from asset repository."
             fi
+        fi
 
-            ln -s "$wallpapers_source" "$target_link"
-            success "Wallpapers systematically mapped to $target_link"
-        else
-            warn "Wallpaper configuration was flagged, but ~/Wallpapers directory wasn't deployed by Git."
+        # Deploy Cursor Configurations matching layout constraints
+        if [[ "$WANT_CURSORS" == true ]]; then
+            if [[ -d "$temp_dir/.icons" ]]; then
+                info "Extracting Cursor infrastructure modules..."
+                rm -rf "$HOME/.icons"
+                cp -r "$temp_dir/.icons" "$HOME/.icons"
+                success "Cursors systematically mapped to ~/.icons"
+            else
+                warn "Cursor installation requested, but '.icons' missing from asset repository."
+            fi
         fi
-    else
-        if [[ -d "$wallpapers_source" ]]; then
-            info "Purging local source folder asset files from home tree..."
-            rm -rf "$wallpapers_source"
-            success "Unused ~/Wallpapers storage cleared cleanly"
-        fi
-    fi
 
-    # Handle Cursor Allocation Logic
-    if [[ "$KEEP_CURSORS" == true ]]; then
-        if [[ -d "$icons_dir" ]]; then
-            success "Cursor asset directory (~/.icons) verified and preserved"
-        else
-            warn "Cursor configuration flagged, but no structural ~/.icons directory was deployed by Git."
-        fi
+        # Safe post-installation environment cleanup using sudo to prevent lockouts
+        info "Purging local temporary workspace tree..."
+        sudo rm -rf "$temp_dir"
+        success "Desktop environment asset pipeline terminated cleanly"
     else
-        if [[ -d "$icons_dir" ]]; then
-            info "Purging local icon/cursor asset directory from home tree..."
-            rm -rf "$icons_dir"
-            success "Unused ~/.icons space cleared cleanly"
-        fi
+        error "Failed to pull configuration blueprints from target asset pool: $repo_url"
+        sudo rm -rf "$temp_dir"
     fi
 }
 
@@ -341,8 +339,8 @@ setup_de_addons() {
 [[ "$RUN_STARSHIP" == true ]]  && setup_starship
 [[ "$RUN_HOSTS" == true ]]     && updateHostsFile
 
-# Unified execution container for Desktop Customization Blocks
-[[ "$RUN_DOTGIT" == true ]]    && setup_de_addons
+# Fire the external asset installer if user confirmed the prompt
+[[ "$RUN_DESETUP" == true ]]   && setup_desetuplinux
 
 # ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
 if [[ "$CHANGE_TO_ZSH" == true ]]; then
