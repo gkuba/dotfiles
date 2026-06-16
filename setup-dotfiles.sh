@@ -107,16 +107,42 @@ if [[ "$RUN_HOSTS" == false ]]; then
     fi
 fi
 
-# ── Wallpaper Setup Prompt (Conditional on Bare Repo pull) ────────────────────
+# ── DE Add-ons Workflow Prompt (Modified Setup) ──────────────────────────────
+INSTALL_DE_ADDONS=false
 KEEP_WALLPAPERS=false
+KEEP_CURSORS=false
+
 if [[ "$RUN_DOTGIT" == true ]]; then
     echo
-    read -r -p "Keep Wallpapers from dotfiles repo and symlink to ~/Pictures/Wallpapers? (y/N): " choice_wallpapers
-    if [[ "$choice_wallpapers" =~ ^[Yy]$ ]]; then
-        KEEP_WALLPAPERS=true
-        echo -e "${GREEN}→ Will keep and map Wallpapers directory${RESET}"
+    read -r -p "Would you like to install the Desktop Environment add-on's (wallpapers/cursors)? (y/N): " choice_addons
+    if [[ "$choice_addons" =~ ^[Yy]$ ]]; then
+        INSTALL_DE_ADDONS=true
+        while true; do
+            read -r -p "Install [w]allpapers, [c]ursors, or [b]oth?: " addon_type
+            case "$addon_type" in
+                [Ww])
+                    KEEP_WALLPAPERS=true
+                    echo -e "${GREEN}→ Selected: Wallpapers only${RESET}"
+                    break
+                    ;;
+                [Cc])
+                    KEEP_CURSORS=true
+                    echo -e "${GREEN}→ Selected: Cursors only${RESET}"
+                    break
+                    ;;
+                [Bb])
+                    KEEP_WALLPAPERS=true
+                    KEEP_CURSORS=true
+                    echo -e "${GREEN}→ Selected: Both Wallpapers and Cursors${RESET}"
+                    break
+                    ;;
+                *)
+                    warn "Invalid choice. Please type 'w', 'c', or 'b'."
+                    ;;
+            esac
+        done
     else
-        echo -e "${RED}→ Will purge ~/Wallpapers directory post-clone${RESET}"
+        echo -e "${RED}→ Will purge ~/Wallpapers and ~/.icons directories post-clone${RESET}"
     fi
 fi
 
@@ -258,18 +284,19 @@ setup_starship() {
     success "Starship installed and configured for node: $actual_hostname"
 }
 
-# ── Consistent Wallpaper Setup Function ───────────────────────────────────────
-setup_wallpapers() {
+# ── Desktop Environment Add-ons Engine ───────────────────────────────────────
+setup_de_addons() {
     local wallpapers_source="$HOME/Wallpapers"
     local pictures_dir="$HOME/Pictures"
     local target_link="$pictures_dir/Wallpapers"
+    local icons_dir="$HOME/.icons"
 
+    # Handle Wallpaper Allocation Logic
     if [[ "$KEEP_WALLPAPERS" == true ]]; then
         if [[ -d "$wallpapers_source" ]]; then
             info "Processing Wallpaper assets and handling symlink mapping..."
             mkdir -p "$pictures_dir"
 
-            # Check and clear conflicting target paths safely
             if [[ -L "$target_link" ]]; then
                 rm "$target_link"
             elif [[ -d "$target_link" ]]; then
@@ -283,11 +310,25 @@ setup_wallpapers() {
             warn "Wallpaper configuration was flagged, but ~/Wallpapers directory wasn't deployed by Git."
         fi
     else
-        # Purge the directory if user explicitly declined keeping them
         if [[ -d "$wallpapers_source" ]]; then
             info "Purging local source folder asset files from home tree..."
             rm -rf "$wallpapers_source"
             success "Unused ~/Wallpapers storage cleared cleanly"
+        fi
+    fi
+
+    # Handle Cursor Allocation Logic
+    if [[ "$KEEP_CURSORS" == true ]]; then
+        if [[ -d "$icons_dir" ]]; then
+            success "Cursor asset directory (~/.icons) verified and preserved"
+        else
+            warn "Cursor configuration flagged, but no structural ~/.icons directory was deployed by Git."
+        fi
+    else
+        if [[ -d "$icons_dir" ]]; then
+            info "Purging local icon/cursor asset directory from home tree..."
+            rm -rf "$icons_dir"
+            success "Unused ~/.icons space cleared cleanly"
         fi
     fi
 }
@@ -300,8 +341,8 @@ setup_wallpapers() {
 [[ "$RUN_STARSHIP" == true ]]  && setup_starship
 [[ "$RUN_HOSTS" == true ]]     && updateHostsFile
 
-# Safely fire wallpaper logic using the updated function name
-[[ "$RUN_DOTGIT" == true ]]    && setup_wallpapers
+# Unified execution container for Desktop Customization Blocks
+[[ "$RUN_DOTGIT" == true ]]    && setup_de_addons
 
 # ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
 if [[ "$CHANGE_TO_ZSH" == true ]]; then
@@ -310,7 +351,6 @@ if [[ "$CHANGE_TO_ZSH" == true ]]; then
 
     target_user=$(whoami)
 
-    # Execute natively without blind sudo profile masks
     if chsh -s /usr/bin/zsh "$target_user"; then
         success "Default user login shell mapped to Zsh successfully!"
         echo -e "${YELLOW}Note: Please log out and log back in (or reboot) for Zsh to fully take effect.${RESET}"
