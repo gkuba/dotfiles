@@ -19,6 +19,22 @@ success() { echo -e "${GREEN}[OK]${RESET} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${RESET} $*"; }
 error()   { echo -e "${RED}[ERROR]${RESET} $*" >&2; }
 
+# ── Help / Usage Output ────────────────────────────────────────────────────────
+show_help() {
+    echo -e "${CYAN}Usage:${RESET} $0 [options]"
+    echo
+    echo -e "${YELLOW}Options:${RESET}"
+    echo "  --dotgit     Setup bare git repository & pull all configs"
+    echo "  --zsh        Install/Update Zsh plugins"
+    echo "  --nvim       Setup Neovim config (standalone curl fallback)"
+    echo "  --fastfetch  Setup fastfetch config (standalone curl fallback)"
+    echo "  --starship   Install Starship + theme"
+    echo "  --hosts      Update /etc/hosts from Gist"
+    echo "  --all        Perform all actions listed above"
+    echo "  -h, --help   Display this help documentation menu"
+    echo
+}
+
 clear
 echo -e "${MAGENTA}===================================================${RESET}"
 echo -e "${CYAN} Dotfiles Setup Script${RESET}"
@@ -69,7 +85,18 @@ else
                 RUN_STARSHIP=true
                 RUN_HOSTS=true
                 ;;
-            *) error "Unknown option: $1"; exit 1 ;;
+            -h|--help)
+                echo
+                show_help
+                exit 0
+                ;;
+            *)
+                echo
+                error "Unknown option: $1"
+                echo
+                show_help
+                exit 1
+                ;;
         esac
         shift
     done
