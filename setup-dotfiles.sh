@@ -167,7 +167,7 @@ updateHostsFile() {
     sudo cp /etc/hosts "/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
 
     # Download gist and append (skip localhost lines to prevent duplicates)
-    if sudo curl -fsSL https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/3c1ea40b581072ba0218140d4ceff47a55744b3c/gistfile1.txt \
+    if sudo curl -fsSL https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt \
         -o /tmp/hosts-gist.tmp; then
 
         echo -e "\n# === Custom hosts from GitHub Gist (added $(date)) ===" | sudo tee -a /etc/hosts > /dev/null
