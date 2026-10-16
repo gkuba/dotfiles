@@ -5,10 +5,27 @@
     "source": "~/.config/fastfetch/images/stencil.png",
     "height": 17,
     "width": 34,
-    "recache": true
+    "cache": "regen"
   },
   "display": {
-    "separator": " 󰑃  "
+    "separator": " 󰑃  ",
+    "color": {
+      "keys": "#BD93F9",
+      "title": "#FF79C6",
+      "output": "#F8F8F2",
+      "separator": "#6272A4"
+    },
+    "percent": {
+      "type": ["num", "bar"],
+      "color": {
+        "green": "#50FA7B",
+        "yellow": "#F1FA8C",
+        "red": "#FF79C6"
+      }
+    },
+    "bar": {
+      "width": 10
+    }
   },
   "modules": [
     {
@@ -18,16 +35,19 @@
     {
       "type": "title",
       "key": "  Hostname",
-      "format": "{host-name}"
+      "format": "{host-name}",
+      "outputColor": "#8BE9FD"
     },
     {
       "type": "title",
       "key": "  User    ",
-      "format": "{user-name}"
+      "format": "{user-name}",
+      "outputColor": "#FF79C6"
     },
     {
       "type": "os",
-      "key": "  OS      "
+      "key": "  OS      ",
+      "outputColor": "#50FA7B"
     },
     {
       "type": "de",
@@ -55,27 +75,36 @@
     },
     {
       "type": "cpu",
-      "key": "  CPU     "
+      "key": "  CPU     ",
+      "temp": true,
+      "format": "i9-14900K ({cores-physical}C/{cores-logical}T) @ {freq-max} - {temperature}"
     },
     {
       "type": "gpu",
-      "key": "  GPU     "
+      "key": "  GPU     ",
+      "temp": true
     },
     {
       "type": "memory",
-      "key": "  Memory  "
+      "key": "  Memory  ",
+      "format": "{percentage-bar} {used} / {total} ({percentage})"
+    },
+    {
+      "type": "swap",
+      "key": "  Swap    ",
+      "format": "{percentage-bar} {used} / {total} ({percentage})"
     },
     {
       "type": "disk",
       "key": "  Root    ",
       "folders": "/",
-      "format": "{size-used} / {size-total} ({size-percentage})"
+      "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
     },
     {
       "type": "disk",
       "key": "  Games   ",
       "folders": "/games",
-      "format": "{size-used} / {size-total} ({size-percentage})"
+      "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
     },
     {
       "type": "localip",
@@ -85,6 +114,13 @@
     {
       "type": "uptime",
       "key": "  Uptime  "
+    },
+    {
+      "type": "command",
+      "key": "  Gamepad ",
+      "text": "for d in /sys/bus/usb/devices/*; do [ -r \"$d/idVendor\" ] || continue; [ \"$(cat \"$d/idVendor\")\" = 2dc8 ] || continue; grep -qi 8BitDo \"$d/manufacturer\" 2>/dev/null || continue; grep -qi 'Ultimate 2' \"$d/product\" 2>/dev/null || continue; printf '8BitDo Ultimate 2 Wireless Controller'; break; done",
+      "useOutput": "stdout",
+      "format": "{result}"
     },
     {
       "type": "custom",
