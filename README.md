@@ -1,6 +1,6 @@
 # Dotfiles
 
-This repository manages my home-directory configuration with a Git bare repository. The setup script deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and optionally applies hosts and desktop assets.
+This repository manages my home-directory configuration with a Git bare repository. The setup script deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and can optionally update the managed hosts block.
 
 Other Starship themes are available at https://github.com/gkuba/Starship-Configs.
 
@@ -14,7 +14,7 @@ bash <(curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-do
 
 If your current shell is fish or another shell that does not support Bash process substitution, start Bash first, then paste the command.
 
-The wizard updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It asks before updating the managed hosts block or copying optional DESetupLinux wallpapers and cursor themes.
+The wizard updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It can also update the managed hosts block.
 
 This script manages configs and Git checkouts. Install packages and set the Zsh login shell with the Arch post-install script.
 
@@ -31,7 +31,7 @@ bash setup-dotfiles.sh setupStarship
 bash setup-dotfiles.sh updateHostsFile
 ```
 
-Run setupDesktopAddons from the wizard to choose wallpapers, cursors, or both. Use --help to list actions.
+Use --help to list actions.
 
 ## Bare repository
 
@@ -54,5 +54,5 @@ setupStarship retains hostname-based selection: pixel uses pixel-starship.toml, 
 
 The hosts action backs up /etc/hosts and replaces only the managed block, preserving other entries and avoiding duplicate appended blocks.
 
-The wizard can copy Wallpapers and/or cursor themes from https://github.com/gkuba/DESetupLinux. Assets are staged temporarily and copied into existing destination folders; matching files update while unrelated files remain.
+Wallpaper and cursor installation is handled by the Arch post-install script, where it can be skipped on headless systems.
 

@@ -22,7 +22,6 @@ DOTFILES_DIR="$HOME/dotfiles"
 DOTFILES_BACKUP_DIR="$HOME/.dotfiles-backup"
 STARSHIP_CONFIG_REPO='https://raw.githubusercontent.com/gkuba/Starship-Configs/main'
 HOSTS_GIST_URL='https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt'
-DESETUP_REPO='https://github.com/gkuba/DESetupLinux.git'
 HOSTS_BLOCK_START='# >>> gkuba custom hosts >>>'
 HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
 ZSH_PLUGIN_REPOS='zsh-users/zsh-autosuggestions
@@ -34,9 +33,6 @@ CURRENT_HOST=''
 TEMP_DIR=''
 COMPLETED='|'
 RUN_HOSTS=false
-RUN_DESKTOP_ADDONS=false
-WANT_WALLPAPERS=false
-WANT_CURSORS=false
 TTY=false
 SINGLE_ACTION=false
 SINGLE_LABEL=''
@@ -50,7 +46,6 @@ show_help() {
     printf '  setupFastfetch      Download standalone Fastfetch config with a backup\n'
     printf '  setupStarship       Select and install this host'\''s Starship config\n'
     printf '  updateHostsFile     Replace the managed hosts block from the configured Gist\n'
-    printf '  setupDesktopAddons  Copy selected DESetupLinux wallpapers and/or cursors\n'
     printf '\nNo action runs the interactive wizard. One named action runs only that action.\n'
     printf 'This script manages configs; it does not install packages or change your shell.\n'
 }
@@ -74,13 +69,12 @@ draw_screen() {
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s│               Dotfiles Setup                │%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s╰──────────────────────────────────────────────╯%s\n\n' "$MAGENTA" "$BOLD" "$RESET"
-    for item in 'Gathering Information' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Installing Desktop Add-ons' 'Finalizing'; do
+    for item in 'Gathering Information' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
         else
             [[ "$item" == 'Configuring Neovim' || "$item" == 'Configuring Fastfetch' ]] && continue
             [[ "$item" == 'Updating Hosts File' && "$RUN_HOSTS" != true ]] && continue
-            [[ "$item" == 'Installing Desktop Add-ons' && "$RUN_DESKTOP_ADDONS" != true ]] && continue
         fi
         mark='○'; color="$DIM"
         if [[ "$active" == "$item" ]]; then mark='●'; color="$CYAN$BOLD"
@@ -265,37 +259,8 @@ updateHostsFile() {
     sudo cp -a /etc/hosts "$backup"; sudo install -m 0644 "$candidate" /etc/hosts
     success "Managed hosts block updated; backup: $backup"
 }
-setupDesktopAddons() {
-    local scratch
-    require_commands git
-    [[ "$WANT_WALLPAPERS" == true || "$WANT_CURSORS" == true ]] || { error 'Choose assets through the wizard first.'; return 2; }
-    make_temp_dir; scratch="$TEMP_DIR/DESetupLinux"
-    git clone --depth=1 "$DESETUP_REPO" "$scratch"
-    if [[ "$WANT_WALLPAPERS" == true ]]; then
-        [[ -d "$scratch/Wallpapers" ]] || { error 'DESetupLinux Wallpapers directory not found.'; return 1; }
-        mkdir -p "$HOME/Pictures/Wallpapers"; cp -a "$scratch/Wallpapers/." "$HOME/Pictures/Wallpapers/"
-    fi
-    if [[ "$WANT_CURSORS" == true ]]; then
-        [[ -d "$scratch/.icons" ]] || { error 'DESetupLinux .icons directory not found.'; return 1; }
-        mkdir -p "$HOME/.icons"; cp -a "$scratch/.icons/." "$HOME/.icons/"
-    fi
-    success 'Selected assets copied; unrelated destination files were retained.'
-}
-
 gatherWizardAnswers() {
-    local choice
     if ask_yes_no 'Update the managed /etc/hosts block from the Gist?' no; then RUN_HOSTS=true; fi
-    if ask_yes_no 'Add DESetupLinux wallpapers and/or cursor themes?' no; then
-        while true; do
-            read -r -p 'Choose [w]allpapers, [c]ursors, or [b]oth: ' choice || return 1
-            case "$(printf '%s' "$choice" | tr '[:upper:]' '[:lower:]')" in
-                w|wallpapers) WANT_WALLPAPERS=true; RUN_DESKTOP_ADDONS=true; break ;;
-                c|cursors) WANT_CURSORS=true; RUN_DESKTOP_ADDONS=true; break ;;
-                b|both) WANT_WALLPAPERS=true; WANT_CURSORS=true; RUN_DESKTOP_ADDONS=true; break ;;
-                *) warn "Enter 'w', 'c', or 'b'." ;;
-            esac
-        done
-    fi
 }
 run_step() {
     local label="$1" action="$2"; shift 2
@@ -312,30 +277,14 @@ run_interactive_setup() {
     draw_screen 'Updating Dotfiles'
     panel 'Setup Plan' 'Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' "Select Starship config for $CURRENT_HOST"
     [[ "$RUN_HOSTS" == true ]] && panel 'Hosts file' 'Replace the managed block and back up current file'
-    [[ "$RUN_DESKTOP_ADDONS" == true ]] && panel 'Desktop assets' 'Copy selected assets; retain unrelated files'
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
     run_step 'Updating Dotfiles' setupDotfiles
     run_step 'Syncing Zsh Plugins' setupZsh
     run_step 'Configuring Starship' setupStarship
     [[ "$RUN_HOSTS" == true ]] && run_step 'Updating Hosts File' updateHostsFile
-    [[ "$RUN_DESKTOP_ADDONS" == true ]] && run_step 'Installing Desktop Add-ons' setupDesktopAddons
     run_step 'Finalizing' true
     success 'Dotfiles setup completed successfully.'
 }
-run_desktop_addons_action() {
-    local choice
-    while true; do
-        read -r -p 'Choose [w]allpapers, [c]ursors, or [b]oth: ' choice || return 1
-        case "$(printf '%s' "$choice" | tr '[:upper:]' '[:lower:]')" in
-            w|wallpapers) WANT_WALLPAPERS=true; break ;;
-            c|cursors) WANT_CURSORS=true; break ;;
-            b|both) WANT_WALLPAPERS=true; WANT_CURSORS=true; break ;;
-            *) warn "Enter 'w', 'c', or 'b'." ;;
-        esac
-    done
-    setupDesktopAddons
-}
-
 run_named_action() {
     local action="$1" label
     case "$action" in
@@ -345,15 +294,13 @@ run_named_action() {
         setupFastfetch) label='Configuring Fastfetch' ;;
         setupStarship) label='Configuring Starship' ;;
         updateHostsFile) label='Updating Hosts File' ;;
-        setupDesktopAddons) label='Installing Desktop Add-ons' ;;
     esac
     SINGLE_ACTION=true
     SINGLE_LABEL="$label"
     draw_screen "$label"
     panel 'Selected Action' "$action"
-    if [[ "$action" == setupDesktopAddons ]]; then panel 'Desktop assets' 'Choose wallpapers, cursors, or both'; fi
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
-    if [[ "$action" == setupDesktopAddons ]]; then run_desktop_addons_action; else "$action"; fi
+    "$action"
     COMPLETED="$COMPLETED$label|"
     draw_screen 'Finalizing'
     success "$action completed successfully."
@@ -366,7 +313,6 @@ main() {
     case "$1" in
         --help|-h) show_help ;;
         setupDotfiles|setupZsh|setupNvim|setupFastfetch|setupStarship|updateHostsFile) run_named_action "$1" ;;
-        setupDesktopAddons) run_named_action "$1" ;;
         *) error "Unknown action: $1"; show_help; return 2 ;;
     esac
 }
