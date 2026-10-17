@@ -1,86 +1,58 @@
-# My __dotfiles__
+# Dotfiles
 
-__NOTE:__ You can get my other themes/styles for the Starship prompt here: [gkuba/Starship-Config][gkuba/Starship-Config]
+This repository manages my home-directory configuration with a Git bare repository. The setup script deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and optionally applies hosts and desktop assets.
 
-[gkuba/Starship-Config]: https://github.com/gkuba/Starship-Configs
+Other Starship themes are available at https://github.com/gkuba/Starship-Configs.
 
-## Installation Info
+## Quick setup
 
-Just copy and paste this command into your terminal and it will pull down my dotfiles and VIM configs as well as the Fira Code fonts for you.
+Paste this command into a Bash-compatible terminal to download and run the setup script:
 
-Note: If your default shell is fish (or any non-bash shell), run the `bash` command first:
 ```bash
 bash <(curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-dotfiles.sh)
 ```
 
-If you would like to set this up for yourself follow the __First Time Setup__ or if you would like to manually set this up to get a better understanding follow the __Manual Installation__ section.
+If your current shell is fish or another shell that does not support Bash process substitution, start Bash first, then paste the command.
 
-___
+The wizard updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It asks before updating the managed hosts block or copying optional DESetupLinux wallpapers and cursor themes.
 
-## Manual Installation and First-Time Setup
+This script manages configs and Git checkouts. Install packages and set the Zsh login shell with the Arch post-install script.
 
-If you are setting this up for yourself you may want to just download or fork my repository and update line 22 of the script to your repository.
+## Run one action
 
-```bash
-git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
-```
-
-### First Time Setup
-
-We are using git bare repository to keep things clean
-
-First Time Setup: - Only used once.
+Run as your normal user. Each named action affects only the selected component:
 
 ```bash
-#Create your repo directory
-git init --bare $HOME/dotfiles
-
-# Set up the alias for working with your files in your .bashrc or .zshrc
-alias dotgit='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
-
-# Restart your terminal session or rerun your shell of choice.
-bash
-
-# Set the config options.
-dotgit config --local status.showUntrackedFiles no
+bash setup-dotfiles.sh setupDotfiles
+bash setup-dotfiles.sh setupZsh
+bash setup-dotfiles.sh setupNvim
+bash setup-dotfiles.sh setupFastfetch
+bash setup-dotfiles.sh setupStarship
+bash setup-dotfiles.sh updateHostsFile
 ```
 
-Basic usage example:
+Run setupDesktopAddons from the wizard to choose wallpapers, cursors, or both. Use --help to list actions.
 
-```bash
-dotgit add /path/to/file
-dotgit commit -m "A short message"
-dotgit push
-```
+## Bare repository
 
-___
+The bare Git repository lives at ~/dotfiles and uses your home directory as its work tree. The script fetches updates and only fast-forwards a clean checkout. If tracked files have local edits, it stops before fetching and prints commands to inspect them.
 
-### Manual Installation
+Before the first checkout, the script lists existing paths that would conflict and asks whether to move them into a timestamped folder under ~/.dotfiles-backup. Declining leaves those paths untouched. If checkout still fails after backup, it stops and shows how to inspect status.
 
-Cloning on another machine: - Every other time you set up.
-__NOTE:__ Don't forget to change the repository below to your own.
+    /usr/bin/git --git-dir="$HOME/dotfiles" --work-tree="$HOME" status --short
+    /usr/bin/git --git-dir="$HOME/dotfiles" --work-tree="$HOME" diff
 
-```bash
-# Create your repo directory
-mkdir -p $HOME/dotfiles
+A convenient alias is:
 
-# Clone the repository
-git clone --bare https://github.com/gkuba/dotfiles.git $HOME/dotfiles
+    alias dotgit='/usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME"'
 
-# Checkout the files for the first time. Can't use config as the alias isn't currently set. 
-# NOTE: this will fail if you have any of the same files in your home dir such as a .bashrc.
-/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME checkout
+## Starship configuration
 
-# Restart your terminal session or rerun your shell of choice.
-bash
+setupStarship retains hostname-based selection: pixel uses pixel-starship.toml, matching Pi hosts use pi-starship.toml, and other hosts use starship.toml. Existing standalone config files are backed up under ~/.dotfiles-backup before replacement. Starship itself is installed by the Arch post-install script.
 
-# Set the config options.
-dotgit config --local status.showUntrackedFiles no
+## Optional integrations
 
-```
+The hosts action backs up /etc/hosts and replaces only the managed block, preserving other entries and avoiding duplicate appended blocks.
 
-Run ```./dotfile_user.sh``` as your user to install the needed apps and clone the various repositories needed for vim and the Starship prompt.
-
-__NOTE:__ You may have to make ```dotfile_user.sh``` executable which can be done with this:
-```chmod +x dotfile_user.sh```
+The wizard can copy Wallpapers and/or cursor themes from https://github.com/gkuba/DESetupLinux. Assets are staged temporarily and copied into existing destination folders; matching files update while unrelated files remain.
 

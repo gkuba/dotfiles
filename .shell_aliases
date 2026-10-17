@@ -9,10 +9,10 @@ fi
 
 # Modern ls aliases (using eza if available, otherwise fallback)
 if command -v eza >/dev/null 2>&1; then
-    alias ls='eza --color=always --group-directories-first --icons=auto'
-    alias ll='eza -lh --color=always --group-directories-first --icons=auto --git'
-    alias la='eza -la --color=always --group-directories-first --icons=auto --git'
-    alias l='eza -l --color=always --group-directories-first --icons=auto'
+    alias ls='eza --color=auto --group-directories-first --icons=auto'
+    alias ll='eza -lh --color=auto --group-directories-first --icons=auto --git'
+    alias la='eza -la --color=auto --group-directories-first --icons=auto --git'
+    alias l='eza -l --color=auto --group-directories-first --icons=auto'
 else
     alias ls='ls --color=auto -F'
     alias ll='ls -alF --color=auto'

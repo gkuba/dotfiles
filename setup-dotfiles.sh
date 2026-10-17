@@ -1,392 +1,373 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Dotfiles Setup Script - Interactive & Streamlined
+# Dotfiles Setup - interactive bare-repository configuration installer
 # =============================================================================
-set -euo pipefail
+set -Eeuo pipefail
 
-# ── Colors ─────────────────────────────────────────────────────────────────────
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-YELLOW="\033[0;33m"
-BLUE="\033[0;34m"
-MAGENTA="\033[0;35m"
-CYAN="\033[0;36m"
-WHITE="\033[0;37m"
-RESET="\033[0m"
+# Colors
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+BLUE=$'\033[0;34m'
+MAGENTA=$'\033[0;35m'
+CYAN=$'\033[0;36m'
+WHITE=$'\033[0;37m'
+DIM=$'\033[2m'
+BOLD=$'\033[1m'
+RESET=$'\033[0m'
 
-info()    { echo -e "${BLUE}[INFO]${RESET} $*"; }
-success() { echo -e "${GREEN}[OK]${RESET} $*"; }
-warn()    { echo -e "${YELLOW}[WARN]${RESET} $*"; }
-error()   { echo -e "${RED}[ERROR]${RESET} $*" >&2; }
+# Configuration
+DOTFILES_REPO='https://github.com/gkuba/dotfiles.git'
+DOTFILES_DIR="$HOME/dotfiles"
+DOTFILES_BACKUP_DIR="$HOME/.dotfiles-backup"
+STARSHIP_CONFIG_REPO='https://raw.githubusercontent.com/gkuba/Starship-Configs/main'
+HOSTS_GIST_URL='https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt'
+DESETUP_REPO='https://github.com/gkuba/DESetupLinux.git'
+HOSTS_BLOCK_START='# >>> gkuba custom hosts >>>'
+HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
+ZSH_PLUGIN_REPOS='zsh-users/zsh-autosuggestions
+zsh-users/zsh-syntax-highlighting
+zsh-users/zsh-history-substring-search'
 
-# ── Help / Usage Output ────────────────────────────────────────────────────────
-show_help() {
-    echo -e "${CYAN}Usage:${RESET} $0 [options]"
-    echo
-    echo -e "${YELLOW}Options:${RESET}"
-    echo "  --dotgit     Setup bare git repository & pull all configs"
-    echo "  --zsh        Install/Update Zsh plugins"
-    echo "  --nvim       Setup Neovim config (standalone curl fallback)"
-    echo "  --fastfetch  Setup fastfetch config (standalone curl fallback)"
-    echo "  --starship   Install Starship + theme"
-    echo "  --hosts      Update /etc/hosts from Gist"
-    echo "  --all        Perform all actions listed above"
-    echo "  -h, --help   Display this help documentation menu"
-    echo
-}
-
-clear
-echo -e "${MAGENTA}===================================================${RESET}"
-echo -e "${CYAN} Dotfiles Setup Script${RESET}"
-echo -e "${MAGENTA}===================================================${RESET}"
-echo
-
-info "Gathering system information..."
-CURRENT_USER=$(whoami)
-CURRENT_SHELL=$(basename "$SHELL")
-ZSH_INSTALLED=false
-if command -v zsh >/dev/null 2>&1; then
-    ZSH_INSTALLED=true
-fi
-
-echo
-echo -e "User: ${GREEN}$CURRENT_USER${RESET}"
-echo -e "Current Shell: ${YELLOW}$CURRENT_SHELL${RESET}"
-echo -e "Zsh Installed: $( [[ "$ZSH_INSTALLED" == true ]] && echo "${GREEN}Yes${RESET}" || echo "${RED}No${RESET}" )"
-
-# ── Parse flags ────────────────────────────────────────────────────────────────
-RUN_DOTGIT=false
-RUN_ZSH=false
-RUN_NVIM=false
-RUN_FASTFETCH=false
-RUN_STARSHIP=false
+CURRENT_USER=''
+CURRENT_HOST=''
+TEMP_DIR=''
+COMPLETED='|'
 RUN_HOSTS=false
-
-if [[ $# -eq 0 ]]; then
-    RUN_DOTGIT=true
-    RUN_ZSH=true
-    RUN_NVIM=true
-    RUN_FASTFETCH=true
-    RUN_STARSHIP=true
-else
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --dotgit)    RUN_DOTGIT=true ;;
-            --zsh)       RUN_ZSH=true ;;
-            --nvim)      RUN_NVIM=true ;;
-            --fastfetch) RUN_FASTFETCH=true ;;
-            --starship)  RUN_STARSHIP=true ;;
-            --hosts)     RUN_HOSTS=true ;;
-            --all)
-                RUN_DOTGIT=true
-                RUN_ZSH=true
-                RUN_NVIM=true
-                RUN_FASTFETCH=true
-                RUN_STARSHIP=true
-                RUN_HOSTS=true
-                ;;
-            -h|--help)
-                echo
-                show_help
-                exit 0
-                ;;
-            *)
-                echo
-                error "Unknown option: $1"
-                echo
-                show_help
-                exit 1
-                ;;
-        esac
-        shift
-    done
-fi
-
-echo
-echo -e "${CYAN}The following actions will be performed:${RESET}"
-[[ "$RUN_DOTGIT" == true ]]    && echo " • Setup bare git repository & pull all configs"
-[[ "$RUN_ZSH" == true ]]       && echo " • Install/Update Zsh plugins"
-[[ "$RUN_NVIM" == true ]]      && echo " • Setup Neovim config (standalone curl fallback)"
-[[ "$RUN_FASTFETCH" == true ]] && echo " • Setup fastfetch config (standalone curl fallback)"
-[[ "$RUN_STARSHIP" == true ]]  && echo " • Install Starship + theme"
-[[ "$RUN_HOSTS" == true ]]     && echo " • Update /etc/hosts from Gist"
-
-# ── Ask about changing shell to Zsh ───────────────────────────────────────────
-if [[ "$ZSH_INSTALLED" == true && "$CURRENT_SHELL" != "zsh" ]]; then
-    echo
-    read -r -p "Would you like to change your default shell to Zsh? (y/N): " change_shell
-    if [[ "$change_shell" =~ ^[Yy]$ ]]; then
-        CHANGE_TO_ZSH=true
-        echo -e "${GREEN}→ Will change default shell to Zsh${RESET}"
-    else
-        CHANGE_TO_ZSH=false
-    fi
-else
-    CHANGE_TO_ZSH=false
-fi
-
-# ── Hosts file prompt (only if not using --all or --hosts flag) ───────────────
-if [[ "$RUN_HOSTS" == false ]]; then
-    echo
-    read -r -p "Update /etc/hosts by appending entries from GitHub Gist? (y/N): " update_hosts
-    if [[ "$update_hosts" =~ ^[Yy]$ ]]; then
-        RUN_HOSTS=true
-    fi
-fi
-
-# ── DESetupLinux Asset Workflow Prompt ────────────────────────────────────────
-RUN_DESETUP=false
+RUN_DESKTOP_ADDONS=false
 WANT_WALLPAPERS=false
 WANT_CURSORS=false
+TTY=false
+SINGLE_ACTION=false
+SINGLE_LABEL=''
 
-if [[ "$RUN_DOTGIT" == true ]]; then
-    echo
-    read -r -p "Would you like to install the Desktop Environment add-on's? (y/N): " choice_addons
-    if [[ "$choice_addons" =~ ^[Yy]$ ]]; then
-        RUN_DESETUP=true
+show_help() {
+    printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
+    printf '%sActions:%s\n' "$YELLOW" "$RESET"
+    printf '  setupDotfiles       Safely clone or update and check out the bare dotfiles repo\n'
+    printf '  setupZsh            Clone or fast-forward configured Zsh plugins\n'
+    printf '  setupNvim           Download standalone Neovim config with a backup\n'
+    printf '  setupFastfetch      Download standalone Fastfetch config with a backup\n'
+    printf '  setupStarship       Select and install this host'\''s Starship config\n'
+    printf '  updateHostsFile     Replace the managed hosts block from the configured Gist\n'
+    printf '  setupDesktopAddons  Copy selected DESetupLinux wallpapers and/or cursors\n'
+    printf '\nNo action runs the interactive wizard. One named action runs only that action.\n'
+    printf 'This script manages configs; it does not install packages or change your shell.\n'
+}
+
+info()    { printf '%s[INFO]%s %s\n' "$BLUE" "$RESET" "$*"; }
+success() { printf '%s[ OK ]%s %s\n' "$GREEN" "$RESET" "$*"; }
+warn()    { printf '%s[WARN]%s %s\n' "$YELLOW" "$RESET" "$*" >&2; }
+error()   { printf '%s[ERR ]%s %s\n' "$RED" "$RESET" "$*" >&2; }
+is_tty()  { [[ -t 0 && -t 1 && -n "$TERM" && "$TERM" != dumb ]]; }
+
+init_terminal() {
+    if is_tty; then TTY=true; else
+        RED=''; GREEN=''; YELLOW=''; BLUE=''; MAGENTA=''; CYAN=''; WHITE=''; DIM=''; BOLD=''; RESET=''
+    fi
+}
+
+draw_screen() {
+    local active="$1" item mark color
+    if [[ "$TTY" != true ]]; then printf 'Dotfiles Setup — %s\n' "$active"; return 0; fi
+    printf '\033[H\033[2J'
+    printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
+    printf '%s%s│               Dotfiles Setup                │%s\n' "$MAGENTA" "$BOLD" "$RESET"
+    printf '%s%s╰──────────────────────────────────────────────╯%s\n\n' "$MAGENTA" "$BOLD" "$RESET"
+    for item in 'Gathering Information' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Installing Desktop Add-ons' 'Finalizing'; do
+        if [[ "$SINGLE_ACTION" == true ]]; then
+            [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
+        else
+            [[ "$item" == 'Configuring Neovim' || "$item" == 'Configuring Fastfetch' ]] && continue
+            [[ "$item" == 'Updating Hosts File' && "$RUN_HOSTS" != true ]] && continue
+            [[ "$item" == 'Installing Desktop Add-ons' && "$RUN_DESKTOP_ADDONS" != true ]] && continue
+        fi
+        mark='○'; color="$DIM"
+        if [[ "$active" == "$item" ]]; then mark='●'; color="$CYAN$BOLD"
+        else case "$COMPLETED" in *"|$item|"*) mark='✓'; color="$GREEN" ;; esac
+        fi
+        printf '  %s%s %s%s\n' "$color" "$mark" "$item" "$RESET"
+    done
+    printf '\n'
+}
+
+panel() {
+    local title="$1" line
+    shift
+    printf '%s┌─ %s ───────────────────────────────────────────────┐%s\n' "$CYAN" "$title" "$RESET"
+    for line in "$@"; do printf '%s│%s %s\n' "$CYAN" "$RESET" "$line"; done
+    printf '%s└────────────────────────────────────────────────────┘%s\n' "$CYAN" "$RESET"
+}
+
+ask_yes_no() {
+    local prompt="$1" default="$2" answer suffix='[y/N]'
+    [[ "$default" == yes ]] && suffix='[Y/n]'
+    while true; do
+        read -r -p "$prompt $suffix " answer || return 1
+        answer=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')
+        if [[ -z "$answer" ]]; then [[ "$default" == yes ]] && return 0 || return 1; fi
+        case "$answer" in y|yes) return 0 ;; n|no) return 1 ;; *) warn 'Please answer y or n.' ;; esac
+    done
+}
+confirm_plan() {
+    local answer
+    read -r -p 'Continue with this plan? [Y/n] ' answer || return 1
+    answer=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')
+    [[ -z "$answer" || "$answer" == y || "$answer" == yes ]]
+}
+require_commands() {
+    local name
+    for name in "$@"; do command -v "$name" >/dev/null 2>&1 || { error "Required command missing: $name"; return 1; }; done
+}
+make_temp_dir() { [[ -n "$TEMP_DIR" ]] || TEMP_DIR=$(mktemp -d /tmp/dotfiles-setup.XXXXXXXX); }
+cleanup_temp_dir() {
+    if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then rm -rf -- "$TEMP_DIR"; fi
+    return 0
+}
+trap cleanup_temp_dir EXIT
+download_to() { curl --fail --location --silent --show-error "$1" --output "$2"; }
+
+backup_existing_file() {
+    local path="$1" relative backup_root
+    [[ -e "$path" || -L "$path" ]] || return 0
+    relative=$(realpath --relative-to="$HOME" "$path")
+    backup_root="$DOTFILES_BACKUP_DIR/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p -- "$backup_root/$(dirname "$relative")"
+    cp -a -- "$path" "$backup_root/$relative"
+    info "Backed up $path to $backup_root/$relative"
+}
+dotgit() { /usr/bin/git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
+
+collect_conflicts() {
+    local ref="$1" relative target prefix
+    : > "$TEMP_DIR/conflicts.raw"
+    while IFS= read -r -d '' relative; do
+        dotgit ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 && continue
+        target="$HOME/$relative"
+        if [[ -e "$target" || -L "$target" ]]; then printf '%s\0' "$relative" >> "$TEMP_DIR/conflicts.raw"; continue; fi
+        prefix="$relative"
+        while [[ "$prefix" == */* ]]; do
+            prefix="${prefix%/*}"
+            target="$HOME/$prefix"
+            if [[ -L "$target" || ( -e "$target" && ! -d "$target" ) ]]; then printf '%s\0' "$prefix" >> "$TEMP_DIR/conflicts.raw"; break; fi
+        done
+    done < <(dotgit ls-tree -r -z --name-only "$ref")
+    sort -zu "$TEMP_DIR/conflicts.raw" -o "$TEMP_DIR/conflicts"
+}
+backup_conflicts() {
+    local relative source backup_root answer
+    [[ -s "$TEMP_DIR/conflicts" ]] || return 0
+    printf '\n%sExisting paths conflict with the checkout:%s\n' "$YELLOW" "$RESET"
+    while IFS= read -r -d '' relative; do printf '  • %s\n' "$relative"; done < "$TEMP_DIR/conflicts"
+    printf 'They can be moved into %s with their directory structure.\n' "$DOTFILES_BACKUP_DIR"
+    read -r -p 'Back up these paths and continue? [y/N] ' answer || return 1
+    answer=$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')
+    [[ "$answer" == y || "$answer" == yes ]] || { error 'Cancelled without moving listed files.'; return 1; }
+    backup_root="$DOTFILES_BACKUP_DIR/$(date +%Y%m%d-%H%M%S)"
+    mkdir -p -- "$backup_root"
+    while IFS= read -r -d '' relative; do
+        source="$HOME/$relative"; [[ -e "$source" || -L "$source" ]] || continue
+        mkdir -p -- "$backup_root/$(dirname "$relative")"
+        mv -- "$source" "$backup_root/$relative"
+    done < "$TEMP_DIR/conflicts"
+    success "Conflicts backed up to $backup_root"
+}
+
+setupDotfiles() {
+    local index_sample changes upstream target
+    require_commands git
+    if [[ ! -e "$DOTFILES_DIR" ]]; then
+        info 'Cloning the dotfiles bare repository...'
+        git clone --bare "$DOTFILES_REPO" "$DOTFILES_DIR"
+    elif [[ ! -d "$DOTFILES_DIR" ]] || [[ "$(dotgit rev-parse --is-bare-repository 2>/dev/null || true)" != true ]]; then
+        error "$DOTFILES_DIR exists but is not a valid bare repository."; error 'Move or rename it manually, then retry.'; return 1
+    fi
+    dotgit config --local status.showUntrackedFiles no
+    make_temp_dir
+    index_sample=$(dotgit ls-files | head -n 1)
+    if [[ -z "$index_sample" ]]; then
+        info 'Checking conflicts before the first checkout...'
+        collect_conflicts HEAD
+        backup_conflicts
+        if ! dotgit checkout; then error 'Checkout failed after the backup attempt; stopping safely.'; return 1; fi
+        success 'Bare repository checked out.'
+        return 0
+    fi
+    changes=$(dotgit status --porcelain=v1 --untracked-files=no)
+    if [[ -n "$changes" ]]; then
+        error 'Tracked dotfiles have local changes. Update stopped before fetching.'
+        printf '%s\n' "$changes"
+        printf 'Inspect: git --git-dir=%q --work-tree=%q status --short\n' "$DOTFILES_DIR" "$HOME"
+        printf 'Review:  git --git-dir=%q --work-tree=%q diff\n' "$DOTFILES_DIR" "$HOME"
+        printf 'Save or resolve changes, then run setupDotfiles again.\n'
+        return 1
+    fi
+    info 'Fetching the latest dotfiles revision...'
+    dotgit fetch --prune origin
+    upstream=$(dotgit rev-parse --abbrev-ref --symbolic-full-name '@{upstream}') || { error 'No upstream configured; stopped safely.'; return 1; }
+    target=$(dotgit rev-parse "$upstream")
+    collect_conflicts "$target"
+    backup_conflicts
+    dotgit merge --ff-only "$target"
+    success 'Bare repository is up to date.'
+}
+
+setupZsh() {
+    local repository name target
+    require_commands git
+    mkdir -p "$HOME/.zsh"
+    while IFS= read -r repository; do
+        name=$(basename "$repository"); target="$HOME/.zsh/$name"
+        if [[ ! -d "$target" ]]; then git clone --depth=1 "https://github.com/$repository.git" "$target"
+        elif [[ -d "$target/.git" ]]; then git -C "$target" pull --ff-only
+        else error "$target is not a Git checkout; leaving it untouched."; return 1
+        fi
+    done <<< "$ZSH_PLUGIN_REPOS"
+    success 'Zsh plugins are current.'
+}
+install_standalone_config() {
+    local url="$1" destination="$2"
+    require_commands curl install
+    make_temp_dir; mkdir -p -- "$(dirname "$destination")"
+    download_to "$url" "$TEMP_DIR/config" || { error "Download failed: $url"; return 1; }
+    backup_existing_file "$destination"
+    install -m 0644 "$TEMP_DIR/config" "$destination"
+    success "Installed $destination"
+}
+setupNvim() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua' "$HOME/.config/nvim/init.lua"; }
+setupFastfetch() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc' "$HOME/.config/fastfetch/config.jsonc"; }
+setupStarship() {
+    local config_file
+    require_commands curl
+    CURRENT_HOST=$(uname -n)
+    case "$CURRENT_HOST" in pixel) config_file='pixel-starship.toml' ;; *pi*|pixelshed) config_file='pi-starship.toml' ;; *) config_file='starship.toml' ;; esac
+    info "Selecting Starship config for $CURRENT_HOST ($config_file)..."
+    install_standalone_config "$STARSHIP_CONFIG_REPO/$config_file" "$HOME/.config/starship.toml"
+}
+
+updateHostsFile() {
+    local downloaded base candidate backup
+    require_commands curl awk sudo install
+    make_temp_dir
+    downloaded="$TEMP_DIR/hosts"; base="$TEMP_DIR/base"; candidate="$TEMP_DIR/candidate"
+    download_to "$HOSTS_GIST_URL" "$downloaded" || { error 'Hosts download failed; no changes made.'; return 1; }
+    if ! awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
+        $0 == start { starts++ }
+        $0 == end { ends++ }
+        END { if (starts != ends) exit 1 }
+    ' /etc/hosts; then
+        error 'The existing managed hosts markers are unmatched; /etc/hosts was not changed.'
+        return 1
+    fi
+    awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '$0==start{inside=1;next} $0==end{inside=0;next} !inside{print}' /etc/hosts > "$base"
+    { cat "$base"; printf '\n%s\n' "$HOSTS_BLOCK_START"; awk 'NF && $1 !~ /^#/ && $1!="127.0.0.1" && $1!="::1" && $1!="localhost"{print}' "$downloaded"; printf '%s\n' "$HOSTS_BLOCK_END"; } > "$candidate"
+    backup="/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)"
+    sudo cp -a /etc/hosts "$backup"; sudo install -m 0644 "$candidate" /etc/hosts
+    success "Managed hosts block updated; backup: $backup"
+}
+setupDesktopAddons() {
+    local scratch
+    require_commands git
+    [[ "$WANT_WALLPAPERS" == true || "$WANT_CURSORS" == true ]] || { error 'Choose assets through the wizard first.'; return 2; }
+    make_temp_dir; scratch="$TEMP_DIR/DESetupLinux"
+    git clone --depth=1 "$DESETUP_REPO" "$scratch"
+    if [[ "$WANT_WALLPAPERS" == true ]]; then
+        [[ -d "$scratch/Wallpapers" ]] || { error 'DESetupLinux Wallpapers directory not found.'; return 1; }
+        mkdir -p "$HOME/Pictures/Wallpapers"; cp -a "$scratch/Wallpapers/." "$HOME/Pictures/Wallpapers/"
+    fi
+    if [[ "$WANT_CURSORS" == true ]]; then
+        [[ -d "$scratch/.icons" ]] || { error 'DESetupLinux .icons directory not found.'; return 1; }
+        mkdir -p "$HOME/.icons"; cp -a "$scratch/.icons/." "$HOME/.icons/"
+    fi
+    success 'Selected assets copied; unrelated destination files were retained.'
+}
+
+gatherWizardAnswers() {
+    local choice
+    if ask_yes_no 'Update the managed /etc/hosts block from the Gist?' no; then RUN_HOSTS=true; fi
+    if ask_yes_no 'Add DESetupLinux wallpapers and/or cursor themes?' no; then
         while true; do
-            read -r -p "Install [w]allpapers, [c]ursors, or [b]oth?: " addon_type
-            case "$addon_type" in
-                [Ww])
-                    WANT_WALLPAPERS=true
-                    echo -e "${GREEN}→ Selected: Wallpapers only${RESET}"
-                    break
-                    ;;
-                [Cc])
-                    WANT_CURSORS=true
-                    echo -e "${GREEN}→ Selected: Cursors only${RESET}"
-                    break
-                    ;;
-                [Bb])
-                    WANT_WALLPAPERS=true
-                    WANT_CURSORS=true
-                    echo -e "${GREEN}→ Selected: Both Wallpapers and Cursors${RESET}"
-                    break
-                    ;;
-                *)
-                    warn "Invalid choice. Please type 'w', 'c', or 'b'."
-                    ;;
+            read -r -p 'Choose [w]allpapers, [c]ursors, or [b]oth: ' choice || return 1
+            case "$(printf '%s' "$choice" | tr '[:upper:]' '[:lower:]')" in
+                w|wallpapers) WANT_WALLPAPERS=true; RUN_DESKTOP_ADDONS=true; break ;;
+                c|cursors) WANT_CURSORS=true; RUN_DESKTOP_ADDONS=true; break ;;
+                b|both) WANT_WALLPAPERS=true; WANT_CURSORS=true; RUN_DESKTOP_ADDONS=true; break ;;
+                *) warn "Enter 'w', 'c', or 'b'." ;;
             esac
         done
     fi
-fi
-
-echo
-read -r -p "Press [Enter] to proceed with setup, or type 'Q' to quit: " confirm
-if [[ "$confirm" =~ ^[Qq]$ ]]; then
-    echo "Setup cancelled by user."
-    exit 0
-fi
-
-echo
-info "Starting setup..."
-
-# ── Temporary dotgit function ─────────────────────────────────────────────────
-dotgit() {
-    /usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME" "$@"
 }
-
-# ── Update Hosts File (APPEND only) ───────────────────────────────────────────
-updateHostsFile() {
-    info "Updating /etc/hosts from GitHub Gist (appending custom entries)..."
-
-    # Backup current hosts file
-    sudo cp /etc/hosts "/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
-
-    # Download gist and append (skip localhost lines to prevent duplicates)
-    if sudo curl -fsSL https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt \
-        -o /tmp/hosts-gist.tmp; then
-
-        echo -e "\n# === Custom hosts from GitHub Gist (added $(date)) ===" | sudo tee -a /etc/hosts > /dev/null
-
-        sudo grep -vE '^(127\.0\.0\.1|::1|localhost|#)' /tmp/hosts-gist.tmp | \
-            sudo tee -a /etc/hosts > /dev/null
-
-        sudo rm -f /tmp/hosts-gist.tmp
-        success "/etc/hosts updated successfully (custom entries appended)"
-    else
-        error "Failed to download hosts file from Gist"
-    fi
+run_step() {
+    local label="$1" action="$2"; shift 2
+    [[ "$TTY" == true ]] && draw_screen "$label"
+    "$action" "$@"
+    COMPLETED="$COMPLETED$label|"
 }
-
-# ── Cleanup old standalone files (Only triggers if bare repository isn't active) ─
-cleanup_old_files() {
-    if [[ "$RUN_NVIM" == true && "$RUN_DOTGIT" == false ]]; then
-        rm -rf "$HOME/.config/nvim"
-    fi
-    if [[ "$RUN_FASTFETCH" == true && "$RUN_DOTGIT" == false ]]; then
-        rm -f "$HOME/.config/fastfetch/config.jsonc"
-    fi
+run_interactive_setup() {
+    [[ "$TTY" == true ]] && clear
+    draw_screen 'Gathering Information'
+    info "User: $CURRENT_USER"; info "Hostname: $CURRENT_HOST"
+    gatherWizardAnswers
+    COMPLETED='|Gathering Information|'
+    draw_screen 'Updating Dotfiles'
+    panel 'Setup Plan' 'Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' "Select Starship config for $CURRENT_HOST"
+    [[ "$RUN_HOSTS" == true ]] && panel 'Hosts file' 'Replace the managed block and back up current file'
+    [[ "$RUN_DESKTOP_ADDONS" == true ]] && panel 'Desktop assets' 'Copy selected assets; retain unrelated files'
+    confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
+    run_step 'Updating Dotfiles' setupDotfiles
+    run_step 'Syncing Zsh Plugins' setupZsh
+    run_step 'Configuring Starship' setupStarship
+    [[ "$RUN_HOSTS" == true ]] && run_step 'Updating Hosts File' updateHostsFile
+    [[ "$RUN_DESKTOP_ADDONS" == true ]] && run_step 'Installing Desktop Add-ons' setupDesktopAddons
+    run_step 'Finalizing' true
+    success 'Dotfiles setup completed successfully.'
 }
-cleanup_old_files
-
-# ── Setup Functions ───────────────────────────────────────────────────────────
-setup_dotgit() {
-    info "Setting up bare dotfiles repository..."
-    if [[ ! -d "$HOME/dotfiles" ]]; then
-        mkdir -p "$HOME/dotfiles"
-        git clone --bare https://github.com/gkuba/dotfiles.git "$HOME/dotfiles"
-        success "Cloned bare repository"
-    else
-        warn "Bare repo folder already exists."
-    fi
-
-    dotgit config --local status.showUntrackedFiles no
-
-    # Safe Checkout Strategy: Gracefully move existing system skeleton files aside
-    if ! dotgit checkout 2>/dev/null; then
-        warn "Pre-existing files detected. Moving structural conflicts to backup stash..."
-        mkdir -p "$HOME/.dotfiles-backup"
-        dotgit checkout 2>&1 | grep -E "^\s" | awk '{print $1}' | while read -r conflicting_file; do
-            if [[ -f "$HOME/$conflicting_file" ]]; then
-                mkdir -p "$HOME/.dotfiles-backup/$(dirname "$conflicting_file")"
-                mv "$HOME/$conflicting_file" "$HOME/.dotfiles-backup/$conflicting_file"
-            fi
-        done
-        dotgit checkout
-    fi
-    success "Dotfiles verified and fully deployed via Bare Repository"
-}
-
-setup_zsh() {
-    info "Syncing Zsh plugins..."
-    mkdir -p "$HOME/.zsh"
-
-    local plugins=(
-        "zsh-users/zsh-autosuggestions"
-        "zsh-users/zsh-syntax-highlighting"
-        "zsh-users/zsh-history-substring-search"
-    )
-
-    for plugin in "${plugins[@]}"; do
-        local name="${plugin##*/}"
-        local target="$HOME/.zsh/$name"
-        if [[ ! -d "$target" ]]; then
-            git clone --depth=1 "https://github.com/$plugin.git" "$target"
-        else
-            git -C "$target" pull --ff-only
-        fi
+run_desktop_addons_action() {
+    local choice
+    while true; do
+        read -r -p 'Choose [w]allpapers, [c]ursors, or [b]oth: ' choice || return 1
+        case "$(printf '%s' "$choice" | tr '[:upper:]' '[:lower:]')" in
+            w|wallpapers) WANT_WALLPAPERS=true; break ;;
+            c|cursors) WANT_CURSORS=true; break ;;
+            b|both) WANT_WALLPAPERS=true; WANT_CURSORS=true; break ;;
+            *) warn "Enter 'w', 'c', or 'b'." ;;
+        esac
     done
-    success "Zsh plugins configured"
+    setupDesktopAddons
 }
 
-setup_nvim() {
-    if [[ "$RUN_DOTGIT" == false ]]; then
-        info "Setting up Neovim (Standalone Mode)..."
-        mkdir -p "$HOME/.config/nvim"
-        curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua \
-            -o "$HOME/.config/nvim/init.lua"
-        success "Downloaded init.lua standalone"
-    fi
-}
-
-setup_fastfetch() {
-    if [[ "$RUN_DOTGIT" == false ]]; then
-        info "Setting up fastfetch (Standalone Mode)..."
-        mkdir -p "$HOME/.config/fastfetch"
-        curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc \
-            -o "$HOME/.config/fastfetch/config.jsonc"
-        success "Downloaded fastfetch config standalone"
-    fi
-}
-
-setup_starship() {
-    info "Installing Starship..."
-    sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- -y
-    mkdir -p "$HOME/.config"
-
-    local actual_hostname=$(uname -n)
-    local url=""
-
-    case "$actual_hostname" in
-        pixel) url="pixel-starship.toml" ;;
-        *pi*|pixelshed) url="pi-starship.toml" ;;
-        *) url="starship.toml" ;;
+run_named_action() {
+    local action="$1" label
+    case "$action" in
+        setupDotfiles) label='Updating Dotfiles' ;;
+        setupZsh) label='Syncing Zsh Plugins' ;;
+        setupNvim) label='Configuring Neovim' ;;
+        setupFastfetch) label='Configuring Fastfetch' ;;
+        setupStarship) label='Configuring Starship' ;;
+        updateHostsFile) label='Updating Hosts File' ;;
+        setupDesktopAddons) label='Installing Desktop Add-ons' ;;
     esac
-
-    curl -sS "https://raw.githubusercontent.com/gkuba/Starship-Configs/main/$url" \
-        -o "$HOME/.config/starship.toml"
-    success "Starship installed and configured for node: $actual_hostname"
+    SINGLE_ACTION=true
+    SINGLE_LABEL="$label"
+    draw_screen "$label"
+    panel 'Selected Action' "$action"
+    if [[ "$action" == setupDesktopAddons ]]; then panel 'Desktop assets' 'Choose wallpapers, cursors, or both'; fi
+    confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
+    if [[ "$action" == setupDesktopAddons ]]; then run_desktop_addons_action; else "$action"; fi
+    COMPLETED="$COMPLETED$label|"
+    draw_screen 'Finalizing'
+    success "$action completed successfully."
 }
-
-# ── Desktop Environment Add-ons (DESetupLinux Integration) ─────────────────────
-setup_desetuplinux() {
-    local temp_dir="/tmp/DESetupLinux-scratch"
-    local repo_url="https://github.com/gkuba/DESetupLinux.git"
-
-    info "Deploying standalone desktop configuration profile environment..."
-
-    # Pre-clean workspace safely
-    sudo rm -rf "$temp_dir"
-    mkdir -p "$temp_dir"
-
-    # Shallow clone to minimize download overhead
-    if git clone --depth=1 "$repo_url" "$temp_dir"; then
-
-        # Deploy Wallpapers matching layout constraints
-        if [[ "$WANT_WALLPAPERS" == true ]]; then
-            if [[ -d "$temp_dir/Wallpapers" ]]; then
-                info "Extracting Wallpapers module to target storage vector..."
-                mkdir -p "$HOME/Pictures"
-                rm -rf "$HOME/Pictures/Wallpapers"
-                cp -r "$temp_dir/Wallpapers" "$HOME/Pictures/Wallpapers"
-                success "Wallpapers systematically mapped to ~/Pictures/Wallpapers"
-            else
-                warn "Wallpaper installation requested, but 'Wallpapers' missing from asset repository."
-            fi
-        fi
-
-        # Deploy Cursor Configurations matching layout constraints
-        if [[ "$WANT_CURSORS" == true ]]; then
-            if [[ -d "$temp_dir/.icons" ]]; then
-                info "Extracting Cursor infrastructure modules..."
-                rm -rf "$HOME/.icons"
-                cp -r "$temp_dir/.icons" "$HOME/.icons"
-                success "Cursors systematically mapped to ~/.icons"
-            else
-                warn "Cursor installation requested, but '.icons' missing from asset repository."
-            fi
-        fi
-
-        # Safe post-installation environment cleanup using sudo to prevent lockouts
-        info "Purging local temporary workspace tree..."
-        sudo rm -rf "$temp_dir"
-        success "Desktop environment asset pipeline terminated cleanly"
-    else
-        error "Failed to pull configuration blueprints from target asset pool: $repo_url"
-        sudo rm -rf "$temp_dir"
-    fi
+main() {
+    init_terminal; require_commands git
+    CURRENT_USER=$(id -un); CURRENT_HOST=$(uname -n)
+    if (($# == 0)); then run_interactive_setup; return; fi
+    if (($# != 1)); then error 'Pass one action at a time.'; show_help; return 2; fi
+    case "$1" in
+        --help|-h) show_help ;;
+        setupDotfiles|setupZsh|setupNvim|setupFastfetch|setupStarship|updateHostsFile) run_named_action "$1" ;;
+        setupDesktopAddons) run_named_action "$1" ;;
+        *) error "Unknown action: $1"; show_help; return 2 ;;
+    esac
 }
-
-# ── Main Execution ─────────────────────────────────────────────────────────────
-[[ "$RUN_DOTGIT" == true ]]    && setup_dotgit
-[[ "$RUN_ZSH" == true ]]       && setup_zsh
-[[ "$RUN_NVIM" == true ]]      && setup_nvim
-[[ "$RUN_FASTFETCH" == true ]] && setup_fastfetch
-[[ "$RUN_STARSHIP" == true ]]  && setup_starship
-[[ "$RUN_HOSTS" == true ]]     && updateHostsFile
-
-# Fire the external asset installer if user confirmed the prompt
-[[ "$RUN_DESETUP" == true ]]   && setup_desetuplinux
-
-# ── Change Shell Section (Bulletproof Logic) ───────────────────────────────────
-if [[ "$CHANGE_TO_ZSH" == true ]]; then
-    echo
-    info "Updating default user shell account space to /usr/bin/zsh..."
-
-    target_user=$(whoami)
-
-    if chsh -s /usr/bin/zsh "$target_user"; then
-        success "Default user login shell mapped to Zsh successfully!"
-        echo -e "${YELLOW}Note: Please log out and log back in (or reboot) for Zsh to fully take effect.${RESET}"
-    else
-        error "Failed to modify shell access database dynamically. Trying fallback entry..."
-        sudo chsh -s /usr/bin/zsh "$target_user"
-        success "Default shell fallback successfully updated to Zsh via sudo."
-    fi
-fi
-
-echo
-success "========================================"
-success " Setup completed successfully! "
-success "========================================"
+main "$@"

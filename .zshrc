@@ -8,7 +8,7 @@
 # ─────────────────────────────────────────────
 # Fastfetch on terminal startup
 # ─────────────────────────────────────────────
-fastfetch
+command -v fastfetch >/dev/null 2>&1 && fastfetch
 
 # ─────────────────────────────────────────────
 # Source common shell files
@@ -34,28 +34,29 @@ setopt interactive_comments     # allow comments in interactive shell
 # ─────────────────────────────────────────────
 # Starship Prompt
 # ─────────────────────────────────────────────
-eval "$(starship init zsh)"
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
 
 # ─────────────────────────────────────────────
 # fzf integration
 # ─────────────────────────────────────────────
-eval "$(fzf --zsh)"
-
-# ─────────────────────────────────────────────
-# Fish-like autosuggestions + syntax highlighting
-# ─────────────────────────────────────────────
-source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
-source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source ~/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh
-
-# Style autosuggestions to be subtle gray (matches your dark theme)
-ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
+if command -v fzf >/dev/null 2>&1; then
+    eval "$(fzf --zsh)"
+fi
 
 # ─────────────────────────────────────────────
 # Autosuggestions settings
 # ─────────────────────────────────────────────
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=240'
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# ─────────────────────────────────────────────
+# Fish-like autosuggestions + history search
+# ─────────────────────────────────────────────
+[[ -r ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -r ~/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh ]] && source ~/.zsh/zsh-history-substring-search/zsh-history-substring-search.zsh
 
 # ─────────────────────────────────────────────
 # History settings
@@ -77,3 +78,6 @@ bindkey '^[[F' end-of-line                # End
 # Alternative sequences (helps with Ghostty compatibility)
 bindkey '^[OH' beginning-of-line
 bindkey '^[OF' end-of-line
+
+# Load syntax highlighting last so it can wrap widgets from earlier plugins.
+[[ -r ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

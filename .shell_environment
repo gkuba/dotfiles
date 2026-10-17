@@ -6,3 +6,6 @@
 export PAGER="less"
 export LESS="-R -M -i -F --mouse"     # -R = color, -M = long prompt, etc.
 export LESSOPEN="| /usr/bin/source-highlight --failsafe --out-format=esc256 -o STDOUT -i %s 2>/dev/null || cat %s"
+
+# Include .NET global tools in PATH
+export PATH="$PATH:$HOME/.dotnet/tools"

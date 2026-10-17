@@ -15,7 +15,16 @@ extract() {
                 *.tar)     tar xvf "$archive" ;;
                 *.tbz2)    tar xvjf "$archive" ;;
                 *.tgz)     tar xvzf "$archive" ;;
-                *.zip)     unzip "$archive" ;;
+                *.zip)
+                    if command -v 7z >/dev/null 2>&1; then
+                        7z x "$archive"
+                    elif command -v unzip >/dev/null 2>&1; then
+                        unzip "$archive"
+                    else
+                        echo "neither 7z nor unzip is installed" >&2
+                        return 1
+                    fi
+                    ;;
                 *.Z)       uncompress "$archive" ;;
                 *.7z)      7z x "$archive" ;;
                 *)         echo "don't know how to extract '$archive'..." ;;
@@ -41,14 +50,14 @@ netinfo() {
         }
     '
 
-    # MAC Addresses (Cleaned Trailing Interface Colons)
+    # MAC addresses, paired with the interface from its header line.
     ip link show | awk '
-        /link\/ether/ {
+        /^[0-9]+: / {
             interface = $2
-            mac = $3
-            gsub(/:/, "", interface)
-            gsub(/:/, "", mac)
-            printf "MACAddr:  %s (%s)\n", mac, interface
+            sub(/:$/, "", interface)
+        }
+        /link\/ether/ {
+            printf "MACAddr:  %s (%s)\n", $2, interface
         }
     '
 }
@@ -89,11 +98,11 @@ dotgit() {
 pacman() {
     case "$1" in
         update)
-            echo "→ Syncing package databases..."
-            sudo /usr/bin/pacman -Sy ${@:2} ;;
+            echo "→ Updating the system (official repositories)..."
+            sudo /usr/bin/pacman -Syu "${@:2}" ;;
         upgrade)
             echo "→ Upgrading installed packages..."
-            sudo /usr/bin/pacman -Su ${@:2} ;;
+            sudo /usr/bin/pacman -Syu "${@:2}" ;;
         install)
             if [ -z "${2:-}" ]; then
                 echo -e "\033[31m[ERROR]\033[0m No packages specified for installation." >&2
@@ -132,8 +141,8 @@ pacman() {
             echo "pacman wrapper (Nala-style)"
             echo "==========================="
             echo ""
-            echo "  pacman update        →  sudo pacman -Sy"
-            echo "  pacman upgrade       →  sudo pacman -Su"
+            echo "  pacman update        →  sudo pacman -Syu"
+            echo "  pacman upgrade       →  sudo pacman -Syu"
             echo "  pacman install <pkg> →  sudo pacman -S <pkg>"
             echo "  pacman remove <pkg>  →  sudo pacman -Rns <pkg>"
             echo "  pacman autoremove    →  remove orphan packages"
@@ -159,11 +168,11 @@ pacman() {
 paru() {
     case "$1" in
         update)
-            echo "→ Syncing package databases (official + AUR)..."
-            /usr/bin/paru -Sy ${@:2} ;;
+            echo "→ Updating the system (official repositories + AUR)..."
+            /usr/bin/paru -Syu "${@:2}" ;;
         upgrade)
             echo "→ Upgrading all packages (official + AUR)..."
-            /usr/bin/paru -Syu ${@:2} ;;
+            /usr/bin/paru -Syu "${@:2}" ;;
         install)
             if [ -z "${2:-}" ]; then
                 echo -e "\033[31m[ERROR]\033[0m No packages specified for installation." >&2
@@ -202,7 +211,7 @@ paru() {
             echo "paru wrapper (Nala-style)"
             echo "========================="
             echo ""
-            echo "  paru update        →  paru -Sy"
+            echo "  paru update        →  paru -Syu"
             echo "  paru upgrade       →  paru -Syu"
             echo "  paru install <pkg> →  paru -S <pkg>"
             echo "  paru remove <pkg>  →  paru -Rns <pkg>"
