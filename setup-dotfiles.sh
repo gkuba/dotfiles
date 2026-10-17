@@ -67,7 +67,7 @@ draw_screen() {
     if [[ "$TTY" != true ]]; then printf 'Dotfiles Setup — %s\n' "$active"; return 0; fi
     printf '\033[H\033[2J'
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
-    printf '%s%s│               Dotfiles Setup                │%s\n' "$MAGENTA" "$BOLD" "$RESET"
+    printf '%s%s│               Dotfiles Setup                 │%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s╰──────────────────────────────────────────────╯%s\n\n' "$MAGENTA" "$BOLD" "$RESET"
     for item in 'Gathering Information' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
@@ -86,9 +86,13 @@ draw_screen() {
 }
 
 panel() {
-    local title="$1" line
+    local title="$1" line dash_count
     shift
-    printf '%s┌─ %s ───────────────────────────────────────────────┐%s\n' "$CYAN" "$title" "$RESET"
+    dash_count=$((48 - ${#title}))
+    (( dash_count < 1 )) && dash_count=1
+    printf '%s┌─ %s ' "$CYAN" "$title"
+    printf '─%.0s' $(seq 1 "$dash_count")
+    printf '┐%s\n' "$RESET"
     for line in "$@"; do printf '%s│%s %s\n' "$CYAN" "$RESET" "$line"; done
     printf '%s└────────────────────────────────────────────────────┘%s\n' "$CYAN" "$RESET"
 }
