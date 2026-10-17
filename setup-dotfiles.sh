@@ -88,13 +88,13 @@ draw_screen() {
 panel() {
     local title="$1" line dash_count
     shift
-    dash_count=$((48 - ${#title}))
+    dash_count=$((51 - ${#title}))
     (( dash_count < 1 )) && dash_count=1
     printf '%s┌─ %s ' "$CYAN" "$title"
     printf '─%.0s' $(seq 1 "$dash_count")
     printf '┐%s\n' "$RESET"
     for line in "$@"; do printf '%s│%s %s\n' "$CYAN" "$RESET" "$line"; done
-    printf '%s└────────────────────────────────────────────────────┘%s\n' "$CYAN" "$RESET"
+    printf '%s└─────────────────────────────────────────────────────┘%s\n' "$CYAN" "$RESET"
 }
 
 ask_yes_no() {
