@@ -88,7 +88,7 @@ draw_screen() {
 panel() {
     local title="$1" line dash_count
     shift
-    dash_count=$((51 - ${#title}))
+    dash_count=$((50 - ${#title}))
     (( dash_count < 1 )) && dash_count=1
     printf '%s┌─ %s ' "$CYAN" "$title"
     printf '─%.0s' $(seq 1 "$dash_count")
