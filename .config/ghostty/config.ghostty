@@ -13,6 +13,7 @@ window-height = 24
 shell-integration = zsh
 # shell-integration = bash
 # shell-integration = none
+shell-integration-features = ssh-env,ssh-terminfo
 
 # === Font ===
 # font-family = "Fira Code"
