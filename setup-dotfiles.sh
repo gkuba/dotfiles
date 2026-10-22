@@ -41,6 +41,7 @@ SINGLE_ACTION=false
 SINGLE_LABEL=''
 SCREEN_OUTPUT_TOP=1
 SCREEN_FINAL_STEP_ROW=1
+SCREEN_ACTIVE_STEP_ROW=1
 
 show_help() {
     printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
@@ -72,6 +73,7 @@ init_terminal() {
 
 draw_screen() {
     local active="$1" item mark color visible_steps=0
+    SCREEN_ACTIVE_STEP_ROW=0
     if [[ "$TTY" != true ]]; then
         printf 'Dotfiles Setup — %s\n' "$active"
         return 0
@@ -94,6 +96,7 @@ draw_screen() {
         fi
         printf '  %s%s %s%s\n' "$color" "$mark" "$item" "$RESET"
         visible_steps=$((visible_steps + 1))
+        [[ "$active" == "$item" ]] && SCREEN_ACTIVE_STEP_ROW=$((3 + visible_steps))
     done
     printf '\n'
     SCREEN_OUTPUT_TOP=$((5 + visible_steps))
@@ -104,6 +107,13 @@ mark_final_step_complete() {
     [[ "$TTY" == true ]] || return 0
     printf '\033[%d;1H\033[2K  %s✓ Finalizing%s\033[%d;1H' \
         "$SCREEN_FINAL_STEP_ROW" "$GREEN" "$RESET" "$SCREEN_OUTPUT_TOP"
+}
+
+mark_active_step_complete() {
+    local label="$1"
+    [[ "$TTY" == true && "$SCREEN_ACTIVE_STEP_ROW" -gt 0 ]] || return 0
+    printf '\033[%d;1H\033[2K  %s✓ %s%s\033[%d;1H' \
+        "$SCREEN_ACTIVE_STEP_ROW" "$GREEN" "$label" "$RESET" "$SCREEN_OUTPUT_TOP"
 }
 
 panel() {
@@ -384,6 +394,7 @@ run_step() {
     fi
     COMPLETED="$COMPLETED$label|"
     if [[ "$label" == 'Finalizing' ]]; then mark_final_step_complete; fi
+    [[ "$label" == 'Finalizing' ]] || mark_active_step_complete "$label"
     return 0
 }
 run_interactive_setup() {
