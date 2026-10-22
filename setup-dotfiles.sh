@@ -56,6 +56,7 @@ show_help() {
 }
 
 info()    { printf '%s[INFO]%s %s\n' "$BLUE" "$RESET" "$*"; }
+info_identity() { printf '%s[INFO]%s %s%s:%s %s\n' "$BLUE" "$RESET" "$CYAN" "$1" "$RESET" "$2"; }
 success() { printf '%s[ OK ]%s %s\n' "$GREEN" "$RESET" "$*"; }
 warn()    { printf '%s[WARN]%s %s\n' "$YELLOW" "$RESET" "$*" >&2; }
 error()   { printf '%s[ERR ]%s %s\n' "$RED" "$RESET" "$*" >&2; }
@@ -69,28 +70,15 @@ init_terminal() {
 
 draw_screen() {
     local active="$1" item mark color
-    local header_width=48 left_text middle_text right_text middle_start right_start left_gap middle_gap
     if [[ "$TTY" != true ]]; then
         printf 'Dotfiles Setup — %s\n' "$active"
-        printf 'OS: %s  User: %s  Host: %s\n' "$CURRENT_OS" "$CURRENT_USER" "$CURRENT_HOST"
         return 0
     fi
     printf '\033[H\033[2J'
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s│               Dotfiles Setup                 │%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s╰──────────────────────────────────────────────╯%s\n' "$MAGENTA" "$BOLD" "$RESET"
-    left_text="OS: $CURRENT_OS"
-    middle_text="User: $CURRENT_USER"
-    right_text="Host: $CURRENT_HOST"
-    middle_start=$(((header_width - ${#middle_text}) / 2))
-    right_start=$((header_width - ${#right_text}))
-    middle_gap=$((right_start - middle_start - ${#middle_text}))
-    if (( middle_gap < 2 )); then
-        middle_start=$((middle_start - 2 + middle_gap))
-        middle_gap=2
-    fi
-    left_gap=$((middle_start - ${#left_text}))
-    printf '%s%s%*s%s%*s%s%s\n\n' "$CYAN" "$left_text" "$left_gap" '' "$middle_text" "$middle_gap" '' "$right_text" "$RESET"
+    printf '\n'
     for item in 'Gathering Information' 'Installing Shell Packages' 'Configuring Login Shell' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
@@ -373,7 +361,9 @@ run_interactive_setup() {
     local -a plan_lines
     [[ "$TTY" == true ]] && clear
     draw_screen 'Gathering Information'
-    info "User: $CURRENT_USER"; info "Hostname: $CURRENT_HOST"
+    info_identity OS "$CURRENT_OS"
+    info_identity User "$CURRENT_USER"
+    info_identity Hostname "$CURRENT_HOST"
     gatherWizardAnswers
     COMPLETED='|Gathering Information|'
     draw_screen 'Installing Shell Packages'
