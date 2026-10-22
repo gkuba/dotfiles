@@ -265,11 +265,10 @@ detect_package_manager() {
     fi
 }
 install_packages() {
-    local package
     detect_package_manager || return 1
     if [[ "$PACKAGE_MANAGER" == pacman ]]; then
         info 'Installing packages with pacman...'
-        sudo pacman -S --needed "$@"
+        run_quietly sudo pacman -S --needed --noconfirm "$@"
     else
         if ! command -v nala >/dev/null 2>&1; then
             info 'Installing Nala with apt...'
@@ -277,7 +276,7 @@ install_packages() {
         fi
         require_commands nala || return 1
         info 'Installing packages with Nala...'
-        sudo nala install "$@"
+        sudo nala install -y "$@"
     fi
 }
 installShellPackages() {
