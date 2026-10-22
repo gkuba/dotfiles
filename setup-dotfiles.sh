@@ -27,7 +27,7 @@ HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
 ZSH_PLUGIN_REPOS='zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting
 zsh-users/zsh-history-substring-search'
-SHELL_PACKAGES=(zsh starship fzf eza fastfetch git curl 7zip unzip iproute2)
+SHELL_PACKAGES=(zsh starship fzf eza fastfetch git curl 7zip unzip iproute2 neovim)
 
 CURRENT_USER=''
 CURRENT_HOST=''
@@ -285,7 +285,16 @@ install_packages() {
     fi
 }
 installShellPackages() {
-    install_packages "${SHELL_PACKAGES[@]}" || return 1
+    detect_package_manager || return 1
+    if [[ "$PACKAGE_MANAGER" == pacman ]]; then
+        install_packages "${SHELL_PACKAGES[@]}" ttf-fira-code || return 1
+    else
+        install_packages "${SHELL_PACKAGES[@]}" fonts-firacode || return 1
+    fi
+    if command -v fc-cache >/dev/null 2>&1; then
+        info 'Refreshing font cache...'
+        fc-cache -f || { error 'Package installation succeeded, but refreshing the font cache failed.'; return 1; }
+    fi
     success 'Shell packages are installed.'
 }
 configureLoginShell() {

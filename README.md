@@ -16,7 +16,7 @@ If your current shell is fish or another shell that does not support Bash proces
 
 The wizard installs the shell tools, updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It can also update the managed hosts block.
 
-Package installation supports Arch-family systems through `pacman` and Debian/Ubuntu-family systems through `apt`; on apt systems, the script installs Nala first and uses it for the shell-tool package batch. The packages are Zsh, Starship, fzf, eza, Fastfetch, Git, curl, 7zip, unzip, and iproute2. The wizard asks whether to set Zsh as the login shell, defaulting to Yes; log out and back in for that change to take effect.
+Package installation supports Arch-family systems through `pacman` and Debian/Ubuntu-family systems through `apt`; on apt systems, the script installs Nala first and uses it for the shell-tool package batch. The packages are Zsh, Starship, fzf, eza, Fastfetch, Git, curl, 7zip, unzip, iproute2, and Neovim. Fira Code is also installed, using `ttf-fira-code` on Arch and `fonts-firacode` on Debian/Ubuntu. The wizard asks whether to set Zsh as the login shell, defaulting to Yes; log out and back in for that change to take effect.
 
 ## Run one action
 
