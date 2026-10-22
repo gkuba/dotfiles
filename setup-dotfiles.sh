@@ -85,9 +85,9 @@ draw_screen() {
     middle_start=$(((header_width - ${#middle_text}) / 2))
     right_start=$((header_width - ${#right_text}))
     middle_gap=$((right_start - middle_start - ${#middle_text}))
-    if (( middle_gap < 1 )); then
-        middle_start=$((middle_start - 1 + middle_gap))
-        middle_gap=1
+    if (( middle_gap < 2 )); then
+        middle_start=$((middle_start - 2 + middle_gap))
+        middle_gap=2
     fi
     left_gap=$((middle_start - ${#left_text}))
     printf '%s%s%*s%s%*s%s%s\n\n' "$CYAN" "$left_text" "$left_gap" '' "$middle_text" "$middle_gap" '' "$right_text" "$RESET"
