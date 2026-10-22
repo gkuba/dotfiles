@@ -68,7 +68,8 @@ init_terminal() {
 }
 
 draw_screen() {
-    local active="$1" item mark color columns slot
+    local active="$1" item mark color
+    local header_width=48 left_text middle_text right_text middle_start right_start left_gap middle_gap
     if [[ "$TTY" != true ]]; then
         printf 'Dotfiles Setup — %s\n' "$active"
         printf 'OS: %s  User: %s  Host: %s\n' "$CURRENT_OS" "$CURRENT_USER" "$CURRENT_HOST"
@@ -78,10 +79,18 @@ draw_screen() {
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s│               Dotfiles Setup                 │%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s╰──────────────────────────────────────────────╯%s\n' "$MAGENTA" "$BOLD" "$RESET"
-    columns=$(tput cols 2>/dev/null || printf '80')
-    (( columns < 60 )) && columns=60
-    slot=$((columns / 3))
-    printf '%s%-*.*s%-*.*s%*.*s%s\n\n' "$CYAN" "$slot" "$slot" "OS: $CURRENT_OS" "$slot" "$slot" "User: $CURRENT_USER" "$slot" "$slot" "Host: $CURRENT_HOST" "$RESET"
+    left_text="OS: $CURRENT_OS"
+    middle_text="User: $CURRENT_USER"
+    right_text="Host: $CURRENT_HOST"
+    middle_start=$(((header_width - ${#middle_text}) / 2))
+    right_start=$((header_width - ${#right_text}))
+    middle_gap=$((right_start - middle_start - ${#middle_text}))
+    if (( middle_gap < 1 )); then
+        middle_start=$((middle_start - 1 + middle_gap))
+        middle_gap=1
+    fi
+    left_gap=$((middle_start - ${#left_text}))
+    printf '%s%s%*s%s%*s%s%s\n\n' "$CYAN" "$left_text" "$left_gap" '' "$middle_text" "$middle_gap" '' "$right_text" "$RESET"
     for item in 'Gathering Information' 'Installing Shell Packages' 'Configuring Login Shell' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
