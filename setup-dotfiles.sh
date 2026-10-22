@@ -376,7 +376,7 @@ gatherWizardAnswers() {
 }
 run_step() {
     local label="$1" action="$2"; shift 2
-    [[ "$TTY" == true && "$label" != 'Finalizing' ]] && draw_screen "$label"
+    [[ "$TTY" == true ]] && draw_screen "$label"
     if [[ "$label" == 'Installing Shell Packages' || "$label" == 'Configuring Starship' ]]; then
         run_in_output_region "$action" "$@"
     else
