@@ -78,7 +78,6 @@ draw_screen() {
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s│               Dotfiles Setup                 │%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s╰──────────────────────────────────────────────╯%s\n' "$MAGENTA" "$BOLD" "$RESET"
-    printf '\n'
     for item in 'Gathering Information' 'Installing Shell Packages' 'Configuring Login Shell' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
@@ -364,6 +363,7 @@ run_interactive_setup() {
     info_identity OS "$CURRENT_OS"
     info_identity User "$CURRENT_USER"
     info_identity Hostname "$CURRENT_HOST"
+    printf '\n'
     gatherWizardAnswers
     COMPLETED='|Gathering Information|'
     draw_screen 'Installing Shell Packages'
