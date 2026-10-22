@@ -268,7 +268,7 @@ install_packages() {
     detect_package_manager || return 1
     if [[ "$PACKAGE_MANAGER" == pacman ]]; then
         info 'Installing packages with pacman...'
-        run_quietly sudo pacman -S --needed --noconfirm "$@"
+        sudo pacman -S --needed --noconfirm "$@"
     else
         if ! command -v nala >/dev/null 2>&1; then
             info 'Installing Nala with apt...'
