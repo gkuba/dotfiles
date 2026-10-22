@@ -150,7 +150,6 @@ require_commands() {
 }
 make_temp_dir() { [[ -n "$TEMP_DIR" ]] || TEMP_DIR=$(mktemp -d /tmp/dotfiles-setup.XXXXXXXX); }
 cleanup_temp_dir() {
-    [[ "$TTY" == true ]] && printf '\033[r'
     if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then rm -rf -- "$TEMP_DIR"; fi
     return 0
 }
