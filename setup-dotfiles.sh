@@ -27,12 +27,15 @@ HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
 ZSH_PLUGIN_REPOS='zsh-users/zsh-autosuggestions
 zsh-users/zsh-syntax-highlighting
 zsh-users/zsh-history-substring-search'
+SHELL_PACKAGES=(zsh starship fzf eza fastfetch git curl 7zip unzip iproute2)
 
 CURRENT_USER=''
 CURRENT_HOST=''
+CURRENT_OS=''
 TEMP_DIR=''
 COMPLETED='|'
 RUN_HOSTS=false
+RUN_LOGIN_SHELL=false
 TTY=false
 SINGLE_ACTION=false
 SINGLE_LABEL=''
@@ -40,14 +43,16 @@ SINGLE_LABEL=''
 show_help() {
     printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
     printf '%sActions:%s\n' "$YELLOW" "$RESET"
+    printf '  installShellPackages Install shell tools with pacman or apt\n'
+    printf '  configureLoginShell  Set Zsh as the login shell\n'
     printf '  setupDotfiles       Safely clone or update and check out the bare dotfiles repo\n'
     printf '  setupZsh            Clone or fast-forward configured Zsh plugins\n'
     printf '  setupNvim           Download standalone Neovim config with a backup\n'
     printf '  setupFastfetch      Download standalone Fastfetch config with a backup\n'
-    printf '  setupStarship       Select and install this host'\''s Starship config\n'
+    printf '  setupStarship       Install Starship and configure this host'\''s prompt\n'
     printf '  updateHostsFile     Replace the managed hosts block from the configured Gist\n'
     printf '\nNo action runs the interactive wizard. One named action runs only that action.\n'
-    printf 'This script manages configs; it does not install packages or change your shell.\n'
+    printf 'This script installs shell tools when needed, manages configs, and sets Zsh as the login shell.\n'
 }
 
 info()    { printf '%s[INFO]%s %s\n' "$BLUE" "$RESET" "$*"; }
@@ -63,18 +68,27 @@ init_terminal() {
 }
 
 draw_screen() {
-    local active="$1" item mark color
-    if [[ "$TTY" != true ]]; then printf 'Dotfiles Setup — %s\n' "$active"; return 0; fi
+    local active="$1" item mark color columns slot
+    if [[ "$TTY" != true ]]; then
+        printf 'Dotfiles Setup — %s\n' "$active"
+        printf 'OS: %s  User: %s  Host: %s\n' "$CURRENT_OS" "$CURRENT_USER" "$CURRENT_HOST"
+        return 0
+    fi
     printf '\033[H\033[2J'
     printf '%s%s╭──────────────────────────────────────────────╮%s\n' "$MAGENTA" "$BOLD" "$RESET"
     printf '%s%s│               Dotfiles Setup                 │%s\n' "$MAGENTA" "$BOLD" "$RESET"
-    printf '%s%s╰──────────────────────────────────────────────╯%s\n\n' "$MAGENTA" "$BOLD" "$RESET"
-    for item in 'Gathering Information' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
+    printf '%s%s╰──────────────────────────────────────────────╯%s\n' "$MAGENTA" "$BOLD" "$RESET"
+    columns=$(tput cols 2>/dev/null || printf '80')
+    (( columns < 60 )) && columns=60
+    slot=$((columns / 3))
+    printf '%s%-*.*s%-*.*s%*.*s%s\n\n' "$CYAN" "$slot" "$slot" "OS: $CURRENT_OS" "$slot" "$slot" "User: $CURRENT_USER" "$slot" "$slot" "Host: $CURRENT_HOST" "$RESET"
+    for item in 'Gathering Information' 'Installing Shell Packages' 'Configuring Login Shell' 'Updating Dotfiles' 'Syncing Zsh Plugins' 'Configuring Neovim' 'Configuring Fastfetch' 'Configuring Starship' 'Updating Hosts File' 'Finalizing'; do
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
         else
             [[ "$item" == 'Configuring Neovim' || "$item" == 'Configuring Fastfetch' ]] && continue
             [[ "$item" == 'Updating Hosts File' && "$RUN_HOSTS" != true ]] && continue
+            [[ "$item" == 'Configuring Login Shell' && "$RUN_LOGIN_SHELL" != true ]] && continue
         fi
         mark='○'; color="$DIM"
         if [[ "$active" == "$item" ]]; then mark='●'; color="$CYAN$BOLD"
@@ -234,9 +248,73 @@ install_standalone_config() {
 }
 setupNvim() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua' "$HOME/.config/nvim/init.lua"; }
 setupFastfetch() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc' "$HOME/.config/fastfetch/config.jsonc"; }
+detect_package_manager() {
+    local os_id os_like
+    [[ -r /etc/os-release ]] || { error 'Cannot identify the OS: /etc/os-release is unavailable.'; return 1; }
+    os_id=''; os_like=''
+    while IFS='=' read -r key value; do
+        value=${value%\"}; value=${value#\"}; value=${value%\'}; value=${value#\'}
+        case "$key" in ID) os_id="$value" ;; ID_LIKE) os_like="$value" ;; esac
+    done < /etc/os-release
+
+    if [[ "$os_id" == arch || "$os_id" == cachyos || " $os_like " == *' arch '* ]]; then
+        require_commands pacman sudo || return 1
+        PACKAGE_MANAGER=pacman
+    elif [[ "$os_id" == debian || "$os_id" == ubuntu || " $os_like " == *' debian '* || " $os_like " == *' ubuntu '* ]]; then
+        require_commands apt-get sudo || return 1
+        PACKAGE_MANAGER=apt
+    else
+        error "Unsupported OS for automatic package installation (ID=$os_id, ID_LIKE=$os_like). Supported package managers: pacman and apt."
+        return 1
+    fi
+}
+install_packages() {
+    local package
+    detect_package_manager || return 1
+    if [[ "$PACKAGE_MANAGER" == pacman ]]; then
+        info 'Installing packages with pacman...'
+        sudo pacman -S --needed "$@"
+    else
+        if ! command -v nala >/dev/null 2>&1; then
+            info 'Installing Nala with apt...'
+            sudo apt-get install -y nala || { error 'Could not install Nala with apt; no other packages were installed.'; return 1; }
+        fi
+        require_commands nala || return 1
+        info 'Installing packages with Nala...'
+        sudo nala install "$@"
+    fi
+}
+installShellPackages() {
+    install_packages "${SHELL_PACKAGES[@]}" || return 1
+    success 'Shell packages are installed.'
+}
+configureLoginShell() {
+    local zsh_path passwd_entry current_shell
+    [[ "$CURRENT_USER" != root ]] || { error 'Run the dotfiles setup as your normal user, not root.'; return 1; }
+    require_commands getent || return 1
+    zsh_path=$(command -v zsh) || { error 'Zsh is not installed; install shell packages first.'; return 1; }
+    [[ -x "$zsh_path" ]] || { error "Detected Zsh path is not executable: $zsh_path"; return 1; }
+    passwd_entry=$(getent passwd "$CURRENT_USER") || { error "Could not look up account: $CURRENT_USER"; return 1; }
+    current_shell=${passwd_entry##*:}
+    if [[ "$current_shell" == "$zsh_path" ]]; then
+        success 'Zsh is already the login shell.'
+        return 0
+    fi
+    require_commands grep sudo usermod || return 1
+    grep -Fxq -- "$zsh_path" /etc/shells || { error "Zsh path is not listed in /etc/shells: $zsh_path"; return 1; }
+    info "Changing the login shell for $CURRENT_USER to $zsh_path..."
+    sudo usermod --shell "$zsh_path" "$CURRENT_USER" || { error 'Could not change the login shell.'; return 1; }
+    passwd_entry=$(getent passwd "$CURRENT_USER") || { error "Could not verify account: $CURRENT_USER"; return 1; }
+    [[ "${passwd_entry##*:}" == "$zsh_path" ]] || { error 'The account database did not report the Zsh shell change.'; return 1; }
+    success 'Zsh is now the login shell. Log out and back in for it to take effect.'
+}
 setupStarship() {
     local config_file
     require_commands curl
+    if ! command -v starship >/dev/null 2>&1; then
+        install_packages starship || return 1
+    fi
+    require_commands starship || return 1
     CURRENT_HOST=$(uname -n)
     case "$CURRENT_HOST" in pixel) config_file='pixel-starship.toml' ;; *pi*|pixelshed) config_file='pi-starship.toml' ;; *) config_file='starship.toml' ;; esac
     info "Selecting Starship config for $CURRENT_HOST ($config_file)..."
@@ -264,6 +342,7 @@ updateHostsFile() {
     success "Managed hosts block updated; backup: $backup"
 }
 gatherWizardAnswers() {
+    if ask_yes_no 'Set Zsh as the login shell?' yes; then RUN_LOGIN_SHELL=true; fi
     if ask_yes_no 'Update the managed /etc/hosts block from the Gist?' no; then RUN_HOSTS=true; fi
 }
 run_step() {
@@ -273,15 +352,21 @@ run_step() {
     COMPLETED="$COMPLETED$label|"
 }
 run_interactive_setup() {
+    local -a plan_lines
     [[ "$TTY" == true ]] && clear
     draw_screen 'Gathering Information'
     info "User: $CURRENT_USER"; info "Hostname: $CURRENT_HOST"
     gatherWizardAnswers
     COMPLETED='|Gathering Information|'
-    draw_screen 'Updating Dotfiles'
-    panel 'Setup Plan' 'Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' "Select Starship config for $CURRENT_HOST"
+    draw_screen 'Installing Shell Packages'
+    plan_lines=('Install shell tools with pacman or apt' 'Install Nala first on apt-based systems')
+    [[ "$RUN_LOGIN_SHELL" == true ]] && plan_lines+=('Set Zsh as the login shell if needed')
+    plan_lines+=('Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' "Select Starship config for $CURRENT_HOST")
+    panel 'Setup Plan' "${plan_lines[@]}"
     [[ "$RUN_HOSTS" == true ]] && panel 'Hosts file' 'Replace the managed block and back up current file'
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
+    run_step 'Installing Shell Packages' installShellPackages
+    [[ "$RUN_LOGIN_SHELL" == true ]] && run_step 'Configuring Login Shell' configureLoginShell
     run_step 'Updating Dotfiles' setupDotfiles
     run_step 'Syncing Zsh Plugins' setupZsh
     run_step 'Configuring Starship' setupStarship
@@ -292,6 +377,7 @@ run_interactive_setup() {
 run_named_action() {
     local action="$1" label
     case "$action" in
+        installShellPackages) label='Installing Shell Packages' ;;
         setupDotfiles) label='Updating Dotfiles' ;;
         setupZsh) label='Syncing Zsh Plugins' ;;
         setupNvim) label='Configuring Neovim' ;;
@@ -310,13 +396,14 @@ run_named_action() {
     success "$action completed successfully."
 }
 main() {
-    init_terminal; require_commands git
+    init_terminal
     CURRENT_USER=$(id -un); CURRENT_HOST=$(uname -n)
+    CURRENT_OS=$(. /etc/os-release 2>/dev/null; printf '%s' "${PRETTY_NAME:-${NAME:-Linux}}")
     if (($# == 0)); then run_interactive_setup; return; fi
     if (($# != 1)); then error 'Pass one action at a time.'; show_help; return 2; fi
     case "$1" in
         --help|-h) show_help ;;
-        setupDotfiles|setupZsh|setupNvim|setupFastfetch|setupStarship|updateHostsFile) run_named_action "$1" ;;
+        installShellPackages|configureLoginShell|setupDotfiles|setupZsh|setupNvim|setupFastfetch|setupStarship|updateHostsFile) run_named_action "$1" ;;
         *) error "Unknown action: $1"; show_help; return 2 ;;
     esac
 }

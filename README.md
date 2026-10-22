@@ -1,6 +1,6 @@
 # Dotfiles
 
-This repository manages my home-directory configuration with a Git bare repository. The setup script deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and can optionally update the managed hosts block.
+This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and can optionally update the managed hosts block.
 
 Other Starship themes are available at https://github.com/gkuba/Starship-Configs.
 
@@ -14,15 +14,17 @@ bash <(curl -sS https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-do
 
 If your current shell is fish or another shell that does not support Bash process substitution, start Bash first, then paste the command.
 
-The wizard updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It can also update the managed hosts block.
+The wizard installs the shell tools, updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It can also update the managed hosts block.
 
-This script manages configs and Git checkouts. Install packages and set the Zsh login shell with the Arch post-install script.
+Package installation supports Arch-family systems through `pacman` and Debian/Ubuntu-family systems through `apt`; on apt systems, the script installs Nala first and uses it for the shell-tool package batch. The packages are Zsh, Starship, fzf, eza, Fastfetch, Git, curl, 7zip, unzip, and iproute2. The wizard asks whether to set Zsh as the login shell, defaulting to Yes; log out and back in for that change to take effect.
 
 ## Run one action
 
 Run as your normal user. Each named action affects only the selected component:
 
 ```bash
+bash setup-dotfiles.sh installShellPackages
+bash setup-dotfiles.sh configureLoginShell
 bash setup-dotfiles.sh setupDotfiles
 bash setup-dotfiles.sh setupZsh
 bash setup-dotfiles.sh setupNvim
@@ -48,7 +50,7 @@ A convenient alias is:
 
 ## Starship configuration
 
-setupStarship retains hostname-based selection: pixel uses pixel-starship.toml, matching Pi hosts use pi-starship.toml, and other hosts use starship.toml. Existing standalone config files are backed up under ~/.dotfiles-backup before replacement. Starship itself is installed by the Arch post-install script.
+The wizard installs Starship with the other shell tools. The standalone `setupStarship` action also installs Starship if missing, then selects the host config: pixel uses pixel-starship.toml, matching Pi hosts use pi-starship.toml, and other hosts use starship.toml. Existing standalone config files are backed up under ~/.dotfiles-backup before replacement.
 
 ## Optional integrations
 
