@@ -368,7 +368,7 @@ gatherWizardAnswers() {
 }
 run_step() {
     local label="$1" action="$2"; shift 2
-    [[ "$TTY" == true ]] && draw_screen "$label"
+    [[ "$TTY" == true && "$label" != 'Finalizing' ]] && draw_screen "$label"
     if [[ "$label" == 'Installing Shell Packages' || "$label" == 'Configuring Starship' ]]; then
         run_in_output_region "$action" "$@"
     else
@@ -425,7 +425,6 @@ run_named_action() {
         "$action"
     fi
     COMPLETED="$COMPLETED$label|"
-    draw_screen 'Finalizing'
     success "$action completed successfully."
 }
 main() {
@@ -441,3 +440,4 @@ main() {
     esac
 }
 main "$@"
+printf '\n'
