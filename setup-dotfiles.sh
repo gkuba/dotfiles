@@ -39,6 +39,7 @@ RUN_LOGIN_SHELL=false
 TTY=false
 SINGLE_ACTION=false
 SINGLE_LABEL=''
+SCREEN_OUTPUT_TOP=1
 
 show_help() {
     printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
@@ -69,7 +70,7 @@ init_terminal() {
 }
 
 draw_screen() {
-    local active="$1" item mark color
+    local active="$1" item mark color visible_steps=0
     if [[ "$TTY" != true ]]; then
         printf 'Dotfiles Setup — %s\n' "$active"
         return 0
@@ -91,8 +92,10 @@ draw_screen() {
         else case "$COMPLETED" in *"|$item|"*) mark='✓'; color="$GREEN" ;; esac
         fi
         printf '  %s%s %s%s\n' "$color" "$mark" "$item" "$RESET"
+        visible_steps=$((visible_steps + 1))
     done
     printf '\n'
+    SCREEN_OUTPUT_TOP=$((5 + visible_steps))
 }
 
 panel() {
@@ -129,6 +132,7 @@ require_commands() {
 }
 make_temp_dir() { [[ -n "$TEMP_DIR" ]] || TEMP_DIR=$(mktemp -d /tmp/dotfiles-setup.XXXXXXXX); }
 cleanup_temp_dir() {
+    [[ "$TTY" == true ]] && printf '\033[r'
     if [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]]; then rm -rf -- "$TEMP_DIR"; fi
     return 0
 }
@@ -145,6 +149,19 @@ backup_existing_file() {
     info "Backed up $path to $backup_root/$relative"
 }
 dotgit() { /usr/bin/git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
+
+run_in_output_region() {
+    local action="$1" rows status
+    shift
+    if [[ "$TTY" != true ]]; then "$action" "$@"; return $?; fi
+    rows=$(tput lines 2>/dev/null) || rows=24
+    if (( SCREEN_OUTPUT_TOP >= rows )); then "$action" "$@"; return $?; fi
+
+    printf '\033[%d;%dr\033[%d;1H' "$SCREEN_OUTPUT_TOP" "$rows" "$SCREEN_OUTPUT_TOP"
+    if "$action" "$@"; then status=0; else status=$?; fi
+    printf '\033[r'
+    return "$status"
+}
 
 collect_conflicts() {
     local ref="$1" relative target prefix
@@ -352,7 +369,11 @@ gatherWizardAnswers() {
 run_step() {
     local label="$1" action="$2"; shift 2
     [[ "$TTY" == true ]] && draw_screen "$label"
-    "$action" "$@"
+    if [[ "$label" == 'Installing Shell Packages' || "$label" == 'Configuring Starship' ]]; then
+        run_in_output_region "$action" "$@"
+    else
+        "$action" "$@"
+    fi
     COMPLETED="$COMPLETED$label|"
 }
 run_interactive_setup() {
@@ -397,7 +418,12 @@ run_named_action() {
     draw_screen "$label"
     panel 'Selected Action' "$action"
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
-    "$action"
+    if [[ "$action" == installShellPackages || "$action" == setupStarship ]]; then
+        SCREEN_OUTPUT_TOP=$((SCREEN_OUTPUT_TOP + 4))
+        run_in_output_region "$action"
+    else
+        "$action"
+    fi
     COMPLETED="$COMPLETED$label|"
     draw_screen 'Finalizing'
     success "$action completed successfully."
