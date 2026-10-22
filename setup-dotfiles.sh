@@ -40,6 +40,7 @@ TTY=false
 SINGLE_ACTION=false
 SINGLE_LABEL=''
 SCREEN_OUTPUT_TOP=1
+SCREEN_FINAL_STEP_ROW=1
 
 show_help() {
     printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
@@ -96,6 +97,13 @@ draw_screen() {
     done
     printf '\n'
     SCREEN_OUTPUT_TOP=$((5 + visible_steps))
+    SCREEN_FINAL_STEP_ROW=$((3 + visible_steps))
+}
+
+mark_final_step_complete() {
+    [[ "$TTY" == true ]] || return 0
+    printf '\033[%d;1H\033[2K  %s✓ Finalizing%s\033[%d;1H' \
+        "$SCREEN_FINAL_STEP_ROW" "$GREEN" "$RESET" "$SCREEN_OUTPUT_TOP"
 }
 
 panel() {
@@ -375,6 +383,8 @@ run_step() {
         "$action" "$@"
     fi
     COMPLETED="$COMPLETED$label|"
+    if [[ "$label" == 'Finalizing' ]]; then mark_final_step_complete; fi
+    return 0
 }
 run_interactive_setup() {
     local -a plan_lines
