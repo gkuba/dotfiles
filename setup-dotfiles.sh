@@ -220,6 +220,7 @@ applyFastfetchAnswers() {
         if ! sed -i \
             -e 's/"type": "kitty-direct"/"type": "builtin"/' \
             -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
+            -e '/"padding": {/,/^[[:space:]]*},/d' \
             "$config"; then
             error 'Could not update Fastfetch to use the built-in system logo.'
             return 1
