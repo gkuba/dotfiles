@@ -52,6 +52,10 @@ A convenient alias is:
 
 The wizard installs Starship with the other shell tools. The standalone `setupStarship` action also installs Starship if missing, then selects the host config: pixel uses pixel-starship.toml, matching Pi hosts use pi-starship.toml, and other hosts use starship.toml. Existing standalone config files are backed up under ~/.dotfiles-backup before replacement.
 
+## Fastfetch images
+
+The setup wizard asks whether to keep the bundled images and whether to use Fastfetch’s default ASCII system logo. If you skip the bundled images and keep the image logo, place your own PNG files in `~/.config/fastfetch/images`; Fastfetch selects from matching images.
+
 ## Optional integrations
 
 The hosts action backs up /etc/hosts and replaces only the managed block, preserving other entries and avoiding duplicate appended blocks.

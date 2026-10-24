@@ -36,6 +36,9 @@ TEMP_DIR=''
 COMPLETED='|'
 RUN_HOSTS=false
 RUN_LOGIN_SHELL=false
+RUN_FASTFETCH_KEEP_IMAGES=true
+RUN_FASTFETCH_ASCII=false
+FASTFETCH_ANSWERS_GATHERED=false
 TTY=false
 SINGLE_ACTION=false
 SINGLE_LABEL=''
@@ -86,7 +89,7 @@ draw_screen() {
         if [[ "$SINGLE_ACTION" == true ]]; then
             [[ "$item" == "$SINGLE_LABEL" || "$item" == 'Finalizing' ]] || continue
         else
-            [[ "$item" == 'Configuring Neovim' || "$item" == 'Configuring Fastfetch' ]] && continue
+            [[ "$item" == 'Configuring Neovim' ]] && continue
             [[ "$item" == 'Updating Hosts File' && "$RUN_HOSTS" != true ]] && continue
             [[ "$item" == 'Configuring Login Shell' && "$RUN_LOGIN_SHELL" != true ]] && continue
         fi
@@ -167,6 +170,89 @@ backup_existing_file() {
 }
 dotgit() { /usr/bin/git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
 
+restoreFastfetchOverrides() {
+    local entry status relative
+    local -a paths=()
+    [[ -d "$DOTFILES_DIR" && "$(dotgit rev-parse --is-bare-repository 2>/dev/null || true)" == true ]] || return 0
+    while IFS= read -r -d '' entry; do
+        status=${entry:0:1}; relative=${entry:2}
+        [[ "$status" == S ]] || continue
+        case "$relative" in
+            .config/fastfetch/config.jsonc|.config/fastfetch/images/*) paths+=("$relative") ;;
+        esac
+    done < <(dotgit ls-files -v -z -- .config/fastfetch)
+    ((${#paths[@]})) || return 0
+    dotgit update-index --no-skip-worktree -- "${paths[@]}"
+    dotgit checkout -- "${paths[@]}"
+}
+
+markFastfetchOverride() {
+    local relative="$1"
+    dotgit ls-files --error-unmatch -- "$relative" >/dev/null 2>&1 || return 0
+    dotgit update-index --skip-worktree -- "$relative"
+}
+
+saveFastfetchAnswers() {
+    local preferences="$HOME/.config/dotfiles-setup/fastfetch.conf"
+    mkdir -p -- "$(dirname "$preferences")"
+    umask 077
+    {
+        printf 'KEEP_IMAGES=%s\n' "$RUN_FASTFETCH_KEEP_IMAGES"
+        printf 'USE_ASCII=%s\n' "$RUN_FASTFETCH_ASCII"
+    } > "$preferences"
+    chmod 600 "$preferences"
+}
+
+applyFastfetchAnswers() {
+    local config="$HOME/.config/fastfetch/config.jsonc" relative
+    local -a images=()
+    [[ -f "$config" ]] || { warn 'Fastfetch config was not found; leaving its settings unchanged.'; return 0; }
+    require_commands git sed || return 1
+    if [[ "$RUN_FASTFETCH_KEEP_IMAGES" != true ]]; then
+        while IFS= read -r -d '' relative; do images+=("$relative"); done < <(dotgit ls-files -z -- .config/fastfetch/images 2>/dev/null || true)
+        if ((${#images[@]})); then
+            for relative in "${images[@]}"; do markFastfetchOverride "$relative"; done
+            for relative in "${images[@]}"; do rm -f -- "$HOME/$relative"; done
+            find "$HOME/.config/fastfetch/images" -depth -type d -empty -delete 2>/dev/null || true
+        fi
+    fi
+    if [[ "$RUN_FASTFETCH_ASCII" == true ]]; then
+        if ! sed -i \
+            -e 's/"type": "kitty-direct"/"type": "builtin"/' \
+            -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
+            "$config"; then
+            error 'Could not update Fastfetch to use the built-in system logo.'
+            return 1
+        fi
+        markFastfetchOverride '.config/fastfetch/config.jsonc'
+    fi
+    saveFastfetchAnswers
+    success 'Fastfetch preferences applied.'
+}
+
+gatherFastfetchAnswers() {
+    if [[ "$FASTFETCH_ANSWERS_GATHERED" != true ]]; then
+        if ask_yes_no 'Keep custom Fastfetch images?' yes; then RUN_FASTFETCH_KEEP_IMAGES=true; else RUN_FASTFETCH_KEEP_IMAGES=false; fi
+        if ask_yes_no 'Update Fastfetch to use the default ASCII system image?' no; then RUN_FASTFETCH_ASCII=true; else RUN_FASTFETCH_ASCII=false; fi
+        FASTFETCH_ANSWERS_GATHERED=true
+    fi
+}
+
+applySavedFastfetchPreferences() {
+    local preferences="$HOME/.config/dotfiles-setup/fastfetch.conf" key value
+    [[ "$FASTFETCH_ANSWERS_GATHERED" != true && -r "$preferences" ]] || return 0
+    RUN_FASTFETCH_KEEP_IMAGES=true
+    RUN_FASTFETCH_ASCII=false
+    while IFS='=' read -r key value; do
+        case "$key:$value" in
+            KEEP_IMAGES:true|KEEP_IMAGES:false) RUN_FASTFETCH_KEEP_IMAGES="$value" ;;
+            USE_ASCII:true|USE_ASCII:false) RUN_FASTFETCH_ASCII="$value" ;;
+        esac
+    done < "$preferences"
+    FASTFETCH_ANSWERS_GATHERED=true
+    applyFastfetchAnswers
+}
+
 run_in_output_region() {
     local action="$1" rows status
     shift
@@ -224,6 +310,7 @@ setupDotfiles() {
     elif [[ ! -d "$DOTFILES_DIR" ]] || [[ "$(dotgit rev-parse --is-bare-repository 2>/dev/null || true)" != true ]]; then
         error "$DOTFILES_DIR exists but is not a valid bare repository."; error 'Move or rename it manually, then retry.'; return 1
     fi
+    restoreFastfetchOverrides
     dotgit config --local status.showUntrackedFiles no
     make_temp_dir
     index_sample=$(dotgit ls-files | head -n 1)
@@ -233,6 +320,7 @@ setupDotfiles() {
         backup_conflicts
         if ! dotgit checkout; then error 'Checkout failed after the backup attempt; stopping safely.'; return 1; fi
         success 'Bare repository checked out.'
+        applySavedFastfetchPreferences || return 1
         return 0
     fi
     changes=$(dotgit status --porcelain=v1 --untracked-files=no)
@@ -252,6 +340,7 @@ setupDotfiles() {
     backup_conflicts
     dotgit merge --ff-only "$target"
     success 'Bare repository is up to date.'
+    applySavedFastfetchPreferences || return 1
 }
 
 setupZsh() {
@@ -277,7 +366,12 @@ install_standalone_config() {
     success "Installed $destination"
 }
 setupNvim() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/nvim/init.lua' "$HOME/.config/nvim/init.lua"; }
-setupFastfetch() { install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc' "$HOME/.config/fastfetch/config.jsonc"; }
+setupFastfetch() {
+    gatherFastfetchAnswers
+    restoreFastfetchOverrides
+    install_standalone_config 'https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master/.config/fastfetch/config.jsonc' "$HOME/.config/fastfetch/config.jsonc" || return 1
+    applyFastfetchAnswers
+}
 detect_package_manager() {
     local os_id os_like
     [[ -r /etc/os-release ]] || { error 'Cannot identify the OS: /etc/os-release is unavailable.'; return 1; }
@@ -382,6 +476,7 @@ updateHostsFile() {
 gatherWizardAnswers() {
     if ask_yes_no 'Set Zsh as the login shell?' yes; then RUN_LOGIN_SHELL=true; fi
     if ask_yes_no 'Update the managed /etc/hosts block from the Gist?' no; then RUN_HOSTS=true; fi
+    gatherFastfetchAnswers
 }
 run_step() {
     local label="$1" action="$2"; shift 2
@@ -409,13 +504,14 @@ run_interactive_setup() {
     draw_screen 'Installing Shell Packages'
     plan_lines=('Install shell tools with pacman or apt' 'Install Nala first on apt-based systems')
     [[ "$RUN_LOGIN_SHELL" == true ]] && plan_lines+=('Set Zsh as the login shell if needed')
-    plan_lines+=('Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' "Select Starship config for $CURRENT_HOST")
+    plan_lines+=('Update bare dotfiles repo and deploy tracked config' 'Sync Zsh plugin checkouts' 'Apply Fastfetch image preferences' "Select Starship config for $CURRENT_HOST")
     panel 'Setup Plan' "${plan_lines[@]}"
     [[ "$RUN_HOSTS" == true ]] && panel 'Hosts file' 'Replace the managed block and back up current file'
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
     run_step 'Installing Shell Packages' installShellPackages
     [[ "$RUN_LOGIN_SHELL" == true ]] && run_step 'Configuring Login Shell' configureLoginShell
     run_step 'Updating Dotfiles' setupDotfiles
+    run_step 'Configuring Fastfetch' applyFastfetchAnswers
     run_step 'Syncing Zsh Plugins' setupZsh
     run_step 'Configuring Starship' setupStarship
     [[ "$RUN_HOSTS" == true ]] && run_step 'Updating Hosts File' updateHostsFile
