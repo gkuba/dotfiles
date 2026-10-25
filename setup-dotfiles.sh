@@ -47,7 +47,7 @@ SCREEN_FINAL_STEP_ROW=1
 SCREEN_ACTIVE_STEP_ROW=1
 
 show_help() {
-    printf '%sUsage:%s %s [action|--help]\n\n' "$CYAN" "$RESET" "$(basename "$0")"
+    printf '%sUsage:%s setup-dotfiles.sh [action|--help]\n\n' "$CYAN" "$RESET"
     printf '%sActions:%s\n' "$YELLOW" "$RESET"
     printf '  installShellPackages Install shell tools with pacman or apt\n'
     printf '  configureLoginShell  Set Zsh as the login shell\n'
@@ -66,7 +66,7 @@ info_identity() { printf '%s[INFO]%s %s%s:%s %s\n' "$BLUE" "$RESET" "$CYAN" "$1"
 success() { printf '%s[ OK ]%s %s\n' "$GREEN" "$RESET" "$*"; }
 warn()    { printf '%s[WARN]%s %s\n' "$YELLOW" "$RESET" "$*" >&2; }
 error()   { printf '%s[ERR ]%s %s\n' "$RED" "$RESET" "$*" >&2; }
-is_tty()  { [[ -t 0 && -t 1 && -n "$TERM" && "$TERM" != dumb ]]; }
+is_tty()  { [[ -t 0 && -t 1 && -n "${TERM:-}" && "${TERM:-dumb}" != dumb ]]; }
 
 init_terminal() {
     if is_tty; then TTY=true; else
@@ -170,6 +170,23 @@ backup_existing_file() {
 }
 dotgit() { /usr/bin/git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
 
+ensureDotfilesTracking() {
+    local current_url branch
+    current_url=$(dotgit remote get-url origin 2>/dev/null || true)
+    if [[ -z "$current_url" ]]; then
+        dotgit remote add origin "$DOTFILES_REPO"
+    elif [[ "$current_url" != "$DOTFILES_REPO" ]]; then
+        warn "origin is $current_url, expected $DOTFILES_REPO; leaving it unchanged."
+    fi
+    dotgit config --local remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    dotgit config --local status.showUntrackedFiles no
+    dotgit fetch --prune origin
+    branch=$(dotgit symbolic-ref --quiet --short HEAD) || { error 'The bare repository HEAD is not on a branch; stopped safely.'; return 1; }
+    dotgit rev-parse --verify -q "origin/$branch" >/dev/null \
+        || { error "origin/$branch not found; stopped safely."; return 1; }
+    dotgit branch --set-upstream-to="origin/$branch" "$branch" >/dev/null
+}
+
 restoreFastfetchOverrides() {
     local entry status relative
     local -a paths=()
@@ -220,7 +237,7 @@ applyFastfetchAnswers() {
         if ! sed -i \
             -e 's/"type": "kitty-direct"/"type": "builtin"/' \
             -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
-            -e '/"padding": {/,/^[[:space:]]*},/d' \
+            -e '/"padding": {/,/^[[:space:]]*}[,]*/ s/"top": [0-9][0-9]*/"top": 0/' \
             "$config"; then
             error 'Could not update Fastfetch to use the built-in system logo.'
             return 1
@@ -255,17 +272,23 @@ applySavedFastfetchPreferences() {
 }
 
 run_in_output_region() {
-    local action="$1" rows status
+    local action="$1" rows
     shift
     if [[ "$TTY" != true ]]; then "$action" "$@"; return $?; fi
     rows=$(tput lines 2>/dev/null) || rows=24
     if (( SCREEN_OUTPUT_TOP >= rows )); then "$action" "$@"; return $?; fi
 
     printf '\033[%d;%dr\033[%d;1H' "$SCREEN_OUTPUT_TOP" "$rows" "$SCREEN_OUTPUT_TOP"
-    if "$action" "$@"; then status=0; else status=$?; fi
+    "$action" "$@"
     printf '\033[r'
-    return "$status"
 }
+
+restore_output_region_on_error() {
+    local status=$?
+    if [[ "$TTY" == true ]]; then printf '\033[r\033[?25h\n'; fi
+    exit "$status"
+}
+trap restore_output_region_on_error ERR
 
 collect_conflicts() {
     local ref="$1" relative target prefix
@@ -311,10 +334,10 @@ setupDotfiles() {
     elif [[ ! -d "$DOTFILES_DIR" ]] || [[ "$(dotgit rev-parse --is-bare-repository 2>/dev/null || true)" != true ]]; then
         error "$DOTFILES_DIR exists but is not a valid bare repository."; error 'Move or rename it manually, then retry.'; return 1
     fi
+    ensureDotfilesTracking
     restoreFastfetchOverrides
-    dotgit config --local status.showUntrackedFiles no
     make_temp_dir
-    index_sample=$(dotgit ls-files | head -n 1)
+    index_sample=$(dotgit ls-files | sed -n '1p')
     if [[ -z "$index_sample" ]]; then
         info 'Checking conflicts before the first checkout...'
         collect_conflicts HEAD
@@ -326,15 +349,14 @@ setupDotfiles() {
     fi
     changes=$(dotgit status --porcelain=v1 --untracked-files=no)
     if [[ -n "$changes" ]]; then
-        error 'Tracked dotfiles have local changes. Update stopped before fetching.'
+        error 'Tracked dotfiles have local changes. Update stopped before merging; remote refs were refreshed.'
         printf '%s\n' "$changes"
         printf 'Inspect: git --git-dir=%q --work-tree=%q status --short\n' "$DOTFILES_DIR" "$HOME"
         printf 'Review:  git --git-dir=%q --work-tree=%q diff\n' "$DOTFILES_DIR" "$HOME"
         printf 'Save or resolve changes, then run setupDotfiles again.\n'
         return 1
     fi
-    info 'Fetching the latest dotfiles revision...'
-    dotgit fetch --prune origin
+    info 'Checking the latest dotfiles revision...'
     upstream=$(dotgit rev-parse --abbrev-ref --symbolic-full-name '@{upstream}') || { error 'No upstream configured; stopped safely.'; return 1; }
     target=$(dotgit rev-parse "$upstream")
     collect_conflicts "$target"
@@ -394,11 +416,23 @@ detect_package_manager() {
     fi
 }
 install_packages() {
+    local package
+    local -a unavailable=()
     detect_package_manager || return 1
     if [[ "$PACKAGE_MANAGER" == pacman ]]; then
         info 'Installing packages with pacman...'
-        sudo pacman -S --needed --noconfirm "$@"
+        sudo pacman -Syu --needed --noconfirm "$@"
     else
+        info 'Refreshing apt package lists...'
+        sudo apt-get update
+        for package in "$@"; do
+            apt-cache show "$package" >/dev/null 2>&1 || unavailable+=("$package")
+        done
+        if ((${#unavailable[@]})); then
+            error "These packages are unavailable in the enabled apt repositories: ${unavailable[*]}"
+            error 'Enable the needed repository components or use a newer Debian/Ubuntu release; no package batch was installed.'
+            return 1
+        fi
         if ! command -v nala >/dev/null 2>&1; then
             info 'Installing Nala with apt...'
             sudo apt-get install -y nala || { error 'Could not install Nala with apt; no other packages were installed.'; return 1; }
@@ -449,7 +483,7 @@ setupStarship() {
     fi
     require_commands starship || return 1
     CURRENT_HOST=$(uname -n)
-    case "$CURRENT_HOST" in pixel) config_file='pixel-starship.toml' ;; *pi*|pixelshed) config_file='pi-starship.toml' ;; *) config_file='starship.toml' ;; esac
+    case "$CURRENT_HOST" in pixel) config_file='pixel-starship.toml' ;; pi|pi-*|raspberrypi*|pixelshed) config_file='pi-starship.toml' ;; *) config_file='starship.toml' ;; esac
     info "Selecting Starship config for $CURRENT_HOST ($config_file)..."
     install_standalone_config "$STARSHIP_CONFIG_REPO/$config_file" "$HOME/.config/starship.toml"
 }
@@ -461,14 +495,18 @@ updateHostsFile() {
     downloaded="$TEMP_DIR/hosts"; base="$TEMP_DIR/base"; candidate="$TEMP_DIR/candidate"
     download_to "$HOSTS_GIST_URL" "$downloaded" || { error 'Hosts download failed; no changes made.'; return 1; }
     if ! awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
-        $0 == start { starts++ }
-        $0 == end { ends++ }
-        END { if (starts != ends) exit 1 }
+        $0 == start { if (inside || starts++) bad=1; inside=1; next }
+        $0 == end { if (!inside || ends++) bad=1; inside=0; next }
+        END { if (inside || starts != ends || bad) exit 1 }
     ' /etc/hosts; then
-        error 'The existing managed hosts markers are unmatched; /etc/hosts was not changed.'
+        error 'The existing managed hosts markers are invalid, nested, or out of order; /etc/hosts was not changed.'
         return 1
     fi
-    awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '$0==start{inside=1;next} $0==end{inside=0;next} !inside{print}' /etc/hosts > "$base"
+    awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
+        $0==start {inside=1; next}
+        $0==end {inside=0; next}
+        !inside { if (NF==0) { blanks++; next } while (blanks--) print ""; blanks=0; print }
+    ' /etc/hosts > "$base"
     { cat "$base"; printf '\n%s\n' "$HOSTS_BLOCK_START"; awk 'NF && $1 !~ /^#/ && $1!="127.0.0.1" && $1!="::1" && $1!="localhost"{print}' "$downloaded"; printf '%s\n' "$HOSTS_BLOCK_END"; } > "$candidate"
     backup="/etc/hosts.bak.$(date +%Y%m%d-%H%M%S)"
     sudo cp -a /etc/hosts "$backup"; sudo install -m 0644 "$candidate" /etc/hosts
@@ -510,12 +548,12 @@ run_interactive_setup() {
     [[ "$RUN_HOSTS" == true ]] && panel 'Hosts file' 'Replace the managed block and back up current file'
     confirm_plan || { info 'Setup cancelled; no changes were made.'; return 0; }
     run_step 'Installing Shell Packages' installShellPackages
-    [[ "$RUN_LOGIN_SHELL" == true ]] && run_step 'Configuring Login Shell' configureLoginShell
+    if [[ "$RUN_LOGIN_SHELL" == true ]]; then run_step 'Configuring Login Shell' configureLoginShell; fi
     run_step 'Updating Dotfiles' setupDotfiles
     run_step 'Configuring Fastfetch' applyFastfetchAnswers
     run_step 'Syncing Zsh Plugins' setupZsh
     run_step 'Configuring Starship' setupStarship
-    [[ "$RUN_HOSTS" == true ]] && run_step 'Updating Hosts File' updateHostsFile
+    if [[ "$RUN_HOSTS" == true ]]; then run_step 'Updating Hosts File' updateHostsFile; fi
     run_step 'Finalizing' true
     success 'Dotfiles setup completed successfully.'
 }
@@ -523,6 +561,7 @@ run_named_action() {
     local action="$1" label
     case "$action" in
         installShellPackages) label='Installing Shell Packages' ;;
+        configureLoginShell) label='Configuring Login Shell' ;;
         setupDotfiles) label='Updating Dotfiles' ;;
         setupZsh) label='Syncing Zsh Plugins' ;;
         setupNvim) label='Configuring Neovim' ;;
