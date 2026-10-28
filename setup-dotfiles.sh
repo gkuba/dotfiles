@@ -220,6 +220,20 @@ saveFastfetchAnswers() {
     chmod 600 "$preferences"
 }
 
+is_kde_plasma_session() {
+    local desktop session
+    desktop="${XDG_CURRENT_DESKTOP:-} ${XDG_SESSION_DESKTOP:-}"
+    session="${DESKTOP_SESSION:-}"
+    desktop="${desktop^^}"
+    session="${session^^}"
+    [[ "$desktop $session" =~ (^|[[:space:]:/-])(KDE|PLASMA)([[:space:]:/-]|$) ]]
+}
+
+set_fastfetch_top_padding_zero() {
+    local config="$1"
+    sed -i '/"padding":[[:space:]]*{/,/}/ s/"top":[[:space:]]*[0-9][0-9]*/"top": 0/' "$config"
+}
+
 applyFastfetchAnswers() {
     local config="$HOME/.config/fastfetch/config.jsonc" relative
     local -a images=()
@@ -237,11 +251,15 @@ applyFastfetchAnswers() {
         if ! sed -i \
             -e 's/"type": "kitty-direct"/"type": "builtin"/' \
             -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
-            -e '/"padding": {/,/^[[:space:]]*}[,]*/ s/"top": [0-9][0-9]*/"top": 0/' \
             "$config"; then
             error 'Could not update Fastfetch to use the built-in system logo.'
             return 1
         fi
+        set_fastfetch_top_padding_zero "$config"
+        markFastfetchOverride '.config/fastfetch/config.jsonc'
+    elif ! is_kde_plasma_session; then
+        # Non-KDE desktop sessions use no top padding for the Fastfetch logo.
+        set_fastfetch_top_padding_zero "$config"
         markFastfetchOverride '.config/fastfetch/config.jsonc'
     fi
     saveFastfetchAnswers
