@@ -250,8 +250,13 @@ applyFastfetchAnswers() {
 
 gatherFastfetchAnswers() {
     if [[ "$FASTFETCH_ANSWERS_GATHERED" != true ]]; then
-        if ask_yes_no 'Keep custom Fastfetch images?' yes; then RUN_FASTFETCH_KEEP_IMAGES=true; else RUN_FASTFETCH_KEEP_IMAGES=false; fi
-        if ask_yes_no 'Update Fastfetch to use the default ASCII system image?' no; then RUN_FASTFETCH_ASCII=true; else RUN_FASTFETCH_ASCII=false; fi
+        if ask_yes_no 'Keep custom Fastfetch images?' yes; then
+            RUN_FASTFETCH_KEEP_IMAGES=true
+            RUN_FASTFETCH_ASCII=false
+        else
+            RUN_FASTFETCH_KEEP_IMAGES=false
+            if ask_yes_no 'Update Fastfetch to use the default ASCII system image?' no; then RUN_FASTFETCH_ASCII=true; else RUN_FASTFETCH_ASCII=false; fi
+        fi
         FASTFETCH_ANSWERS_GATHERED=true
     fi
 }

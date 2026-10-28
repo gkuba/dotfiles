@@ -56,7 +56,7 @@ The wizard installs Starship with the other shell tools. The standalone `setupSt
 
 ## Fastfetch images
 
-The setup wizard asks whether to keep the bundled images and whether to use Fastfetch’s default ASCII system logo. Choosing the default logo changes the logo type and removes its top padding. If you skip the bundled images and keep the image logo, place your own PNG files in `~/.config/fastfetch/images`; Fastfetch selects from matching images.
+The setup wizard asks whether to keep the bundled Fastfetch images. If yes, it keeps the image setup and skips the ASCII-logo question. If no, it asks whether to switch to Fastfetch’s default ASCII system logo; choosing that changes the logo type and removes its top padding. If you skip the bundled images and keep the image logo, place your own PNG files in `~/.config/fastfetch/images`; Fastfetch selects from matching images.
 
 ## Optional integrations
 
