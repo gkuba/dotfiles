@@ -1,6 +1,6 @@
 # Dotfiles
 
-This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys dotfiles, syncs Zsh plugins, selects a hostname-specific Starship configuration, and can optionally update the managed hosts block.
+This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys the dotfiles, syncs Zsh plugins, installs a hostname-specific Starship configuration, applies Fastfetch preferences, and can set Zsh as the login shell and update the managed hosts block.
 
 Other Starship themes are available at https://github.com/gkuba/Starship-Configs.
 
@@ -12,55 +12,96 @@ Paste this command into a Bash-compatible terminal to download and run the setup
 bash <(curl -fsSL https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-dotfiles.sh)
 ```
 
-If your current shell is fish or another shell that does not support Bash process substitution, start Bash first, then paste the command.
+If your current shell is fish or another shell that does not support Bash process substitution, start Bash first, then paste the command. Run it as your normal user in a terminal of at least 80×24; it asks for your sudo password only after you confirm the plan.
 
-The wizard installs the shell tools, updates the bare dotfiles repository, syncs Zsh plugins, and selects the Starship configuration for the current hostname. It can also update the managed hosts block.
-
-Package installation supports Arch-family systems through `pacman` and Debian/Ubuntu-family systems through `apt`; on apt systems, the script refreshes package lists, installs Nala first, and uses it for the shell-tool package batch. It checks that every requested package is available before starting the batch. The packages are Zsh, Starship, fzf, eza, Fastfetch, Git, curl, 7zip, unzip, iproute2, and Neovim. Fira Code is also installed, using `ttf-fira-code` on Arch and `fonts-firacode` on Debian/Ubuntu. The wizard asks whether to set Zsh as the login shell, defaulting to Yes; log out and back in for that change to take effect.
-
-The complete package set requires Debian 13 (Trixie) or newer, or Ubuntu 25.10 or newer, with the required repositories enabled. Older releases may not provide Starship, eza, or Fastfetch; the script reports missing package names and stops before installing the batch.
-
-## Run one action
-
-Run as your normal user. Each named action affects only the selected component:
+To see everything it would do without changing anything, add `--dry-run`:
 
 ```bash
-bash setup-dotfiles.sh installShellPackages
-bash setup-dotfiles.sh configureLoginShell
-bash setup-dotfiles.sh setupDotfiles
-bash setup-dotfiles.sh setupZsh
-bash setup-dotfiles.sh setupNvim
-bash setup-dotfiles.sh setupFastfetch
-bash setup-dotfiles.sh setupStarship
-bash setup-dotfiles.sh updateHostsFile
+bash <(curl -fsSL https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-dotfiles.sh) --dry-run
 ```
 
-Use --help to list actions.
+## The wizard
+
+The script is a full-screen wizard built on [InstallScriptTemplate](https://github.com/gkuba/InstallScriptTemplate):
+
+1. **Packages:** Zsh, Starship, fzf, eza, Fastfetch and Neovim; Git, curl, 7zip, unzip, iproute2 and the Fira Code font.
+2. **Dotfiles:** the bare repository, Zsh plugins, the Starship prompt, backing up conflicting files, and standalone app configs.
+3. **System and Fastfetch:** a full system update, Zsh as the login shell, the hosts block, and the Fastfetch image choices.
+4. **Review selections:** every item with its status, where single items can be switched on or off.
+5. **Review the plan:** what will run. Anything that would make the run fail is shown as a blocker, and the run cannot start until it is fixed.
+6. **Authenticate**, then each step runs with its output on screen, followed by a summary and the full log.
+
+Keys: ↑↓ move, Space toggles, Enter goes on, B goes back, Esc quits. On the install screen, Ctrl+C stops after the current step.
+
+The defaults match a plain run: every package, the bare repository, Zsh plugins, Starship and the Zsh login shell are selected; the hosts block and the system update are not.
+
+## Command-line options
+
+Selection options choose exactly what runs and open the wizard at the review screen. Nothing runs until you confirm the plan and enter your password.
+
+```text
+-p, --packages     Shell tools, utilities, and the Fira Code font
+-d, --dotfiles     Bare dotfiles repo (~/dotfiles), Zsh plugins, Starship prompt
+-s, --system       Zsh as the login shell and the managed /etc/hosts block
+-u, --update       Full system update before packages are installed
+-A, --all          -p, -d and -s (add -u for a system update)
+-n, --dry-run      Show every command that would change the system, change nothing
+-h, --help         Show the help
+```
+
+Short options can be combined, for example `setup-dotfiles.sh -dn` to preview a dotfiles update.
+
+## Packages
+
+Package installation supports Arch-family systems through `pacman` and Debian/Ubuntu-family systems through `apt`. A tool that is already on your PATH counts as installed, even if it came from outside the package manager, so no second copy is added.
+
+When anything needs installing on Arch, the script runs one `pacman -Syu --needed` transaction: it syncs the package databases, upgrades the system and installs the new packages together. Syncing without upgrading would be a partial upgrade, which Arch does not support. When everything is already installed, nothing is synced or upgraded.
+
+On apt systems the script runs `apt-get update`, installs Nala first if needed, and uses it to install the packages. Packages that the enabled repositories do not provide are shown as a blocker on the plan screen. The complete package set requires Debian 13 (Trixie) or newer, or Ubuntu 25.10 or newer; older releases may not provide Starship, eza, or Fastfetch.
+
+Fira Code is `ttf-fira-code` on Arch and `fonts-firacode` on Debian/Ubuntu. After setting Zsh as the login shell, log out and back in for the change to take effect.
 
 ## Bare repository
 
-The bare Git repository lives at ~/dotfiles and uses your home directory as its work tree. The script refreshes origin tracking refs, then only fast-forwards a clean checkout. If the origin URL differs from the configured HTTPS URL, it warns and leaves the existing remote unchanged. If tracked files have local edits, it stops before merging and prints commands to inspect them.
+The bare Git repository lives at ~/dotfiles and uses your home directory as its work tree. Manage it with the `dotgit` function from `.shell_functions`:
 
-Before the first checkout, the script lists existing paths that would conflict and asks whether to move them into a timestamped folder under ~/.dotfiles-backup. Declining leaves those paths untouched. If checkout still fails after backup, it stops and shows how to inspect status.
+    dotgit() { /usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME" "$@"; }
 
-    /usr/bin/git --git-dir="$HOME/dotfiles" --work-tree="$HOME" status --short
-    /usr/bin/git --git-dir="$HOME/dotfiles" --work-tree="$HOME" diff
+On a machine without ~/dotfiles, the script clones the repository and sets the same config this setup uses: untracked files hidden (`status.showUntrackedFiles no`) and an upstream for `dotgit pull`. Before the first checkout it finds existing files that the checkout would overwrite. They are listed on the plan screen, and with **Back up conflicts** selected they are moved into a timestamped folder under ~/.dotfiles-backup first.
 
-A convenient alias is:
+On an existing repository the script only fetches the current branch and fast-forwards it, like `dotgit pull --ff-only`. It writes no Git config and adds no remote-tracking refs. It stops with nothing changed when:
 
-    alias dotgit='/usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME"'
+- tracked files have local edits (check them with `dotgit status` and `dotgit diff`),
+- the update would overwrite untracked files and **Back up conflicts** is not selected,
+- the branch has local commits that are not on origin, so it cannot fast-forward.
+
+The origin URL is left as it is, so an SSH remote keeps working. Git runs without prompts during the install steps; for an SSH remote, have your key loaded in an agent.
 
 ## Starship configuration
 
-The wizard installs Starship with the other shell tools. The standalone `setupStarship` action also installs Starship if missing, then selects the host config: pixel uses pixel-starship.toml, matching Pi hosts use pi-starship.toml, and other hosts use starship.toml. Existing standalone config files are backed up under ~/.dotfiles-backup before replacement.
+The Starship step installs the config for the current hostname: pixel uses pixel-starship.toml, Pi hosts (pi, pi-*, raspberrypi*, pixelshed) use pi-starship.toml, and other hosts use starship.toml. An existing config is backed up under ~/.dotfiles-backup before it is replaced, and left alone when it is already current.
 
-## Fastfetch images
+## Fastfetch preferences
 
-The setup wizard asks whether to keep the bundled Fastfetch images. If yes, it keeps the image setup and skips the ASCII-logo question. If no, it asks whether to switch to Fastfetch’s default ASCII system logo; choosing that changes the logo type and removes its top padding. If you skip the bundled images and keep the image logo, place your own PNG files in `~/.config/fastfetch/images`; Fastfetch selects from matching images.
+Two choices on the System and Fastfetch page control Fastfetch:
 
-## Optional integrations
+- **Fastfetch images:** keep the custom logo images. Switching it off removes them from your home directory; they stay in the repository.
+- **Fastfetch ASCII:** use Fastfetch's built-in system logo instead of an image, with no top padding.
 
-The hosts action backs up /etc/hosts and replaces only the managed block, preserving other entries and avoiding duplicate appended blocks.
+Outside a KDE Plasma session, the logo's top padding is set to 0 as well. If you remove the bundled images but keep the image logo, place your own PNG files in `~/.config/fastfetch/images`.
+
+The choices are saved in `~/.config/dotfiles-setup/fastfetch.conf` and become the defaults next time. The edited files are hidden from `dotgit status` with Git's skip-worktree flag. Before a dotfiles update they are restored so Git can update them, and the saved preferences are applied again afterwards.
+
+## Standalone app configs
+
+**App configs only** downloads just the Neovim and Fastfetch configs, for machines that do not use the bare repository. It cannot be combined with the bare repository, since it would overwrite files the repository tracks. Existing files are backed up under ~/.dotfiles-backup first.
+
+## Hosts block
+
+The hosts step downloads the list from the Gist, backs up /etc/hosts to /etc/hosts.bak.&lt;timestamp&gt;, and replaces only the block between the `# >>> gkuba custom hosts >>>` markers, preserving every other entry. It does nothing when the block is already current, and it refuses to run if the markers are nested, repeated or out of order.
+
+## Logs
+
+Every run writes a log to /tmp (the path is shown on the last screen; Ctrl+D opens it). The sudo password is never logged.
 
 Wallpaper and cursor installation is handled by the Arch post-install script, where it can be skipped on headless systems.
-
