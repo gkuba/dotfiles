@@ -67,7 +67,7 @@ The bare Git repository lives at ~/dotfiles and uses your home directory as its 
 
     dotgit() { /usr/bin/git --git-dir="$HOME/dotfiles/" --work-tree="$HOME" "$@"; }
 
-On a machine without ~/dotfiles, the script clones the repository and sets the same config this setup uses: untracked files hidden (`status.showUntrackedFiles no`) and an upstream for `dotgit pull`. Before the first checkout it finds existing files that the checkout would overwrite. They are listed on the plan screen, and with **Back up conflicts** selected they are moved into a timestamped folder under ~/.dotfiles-backup first.
+On a machine without ~/dotfiles, the script clones the repository over HTTPS, so no SSH key is needed yet. It then sets the same config this setup uses: origin switched to `git@github.com:gkuba/dotfiles.git` for updates and pushes, untracked files hidden (`status.showUntrackedFiles no`), and an upstream for `dotgit pull`. Before the first checkout it finds existing files that the checkout would overwrite. They are listed on the plan screen, and with **Back up conflicts** selected they are moved into a timestamped folder under ~/.dotfiles-backup first.
 
 On an existing repository the script only fetches the current branch and fast-forwards it, like `dotgit pull --ff-only`. It writes no Git config and adds no remote-tracking refs. It stops with nothing changed when:
 
@@ -75,7 +75,7 @@ On an existing repository the script only fetches the current branch and fast-fo
 - the update would overwrite untracked files and **Back up conflicts** is not selected,
 - the branch has local commits that are not on origin, so it cannot fast-forward.
 
-The origin URL is left as it is, so an SSH remote keeps working. Git runs without prompts during the install steps; for an SSH remote, have your key loaded in an agent.
+The origin URL is left as it is. Git runs without prompts during the install steps, so have your SSH key loaded in an agent. If fetching from the SSH origin fails anyway (for example, on a box where the key is not set up yet), the update fetches once over HTTPS instead, without changing origin. Pushing still needs the SSH key.
 
 ## Starship configuration
 

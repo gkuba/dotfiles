@@ -183,7 +183,8 @@ repeat_glyph "$G_HEAVY" 200; HEAVYBAR=$REPEAT_OUT
 # ═════════════════════════════════════════════════════════════════════════════
 
 # ── Configuration ───────────────────────────────────────────────────────────
-DOTFILES_REPO='https://github.com/gkuba/dotfiles.git'
+DOTFILES_REPO='https://github.com/gkuba/dotfiles.git'  # first clone: works without an SSH key
+DOTFILES_SSH='git@github.com:gkuba/dotfiles.git'       # origin after the clone, for updates and pushes
 DOTFILES_DIR="$HOME/dotfiles"
 DOTFILES_BACKUP_DIR="$HOME/.dotfiles-backup"
 DOTFILES_RAW='https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master'
@@ -731,6 +732,8 @@ inspect_dotfiles() {
   fi
   if [[ -n "$DOT_BRANCH" ]] && command -v timeout >/dev/null 2>&1; then
     DOT_REMOTE_SHA=$(timeout 15 /usr/bin/git --git-dir="$DOTFILES_DIR" ls-remote origin "refs/heads/$DOT_BRANCH" 2>/dev/null | cut -f1)
+    # Same HTTPS fallback as the update step, for boxes without an SSH key.
+    [[ -n "$DOT_REMOTE_SHA" ]] || DOT_REMOTE_SHA=$(timeout 15 /usr/bin/git --git-dir="$DOTFILES_DIR" ls-remote "$DOTFILES_REPO" "refs/heads/$DOT_BRANCH" 2>/dev/null | cut -f1)
   fi
   if (( DOT_INDEX_EMPTY )); then
     [[ -n "$DOT_HEAD" ]] && collect_conflicts HEAD
@@ -1776,12 +1779,15 @@ clone_dotfiles_repo() {
   info "Cloning $DOTFILES_REPO into $DOTFILES_DIR"
   run /usr/bin/git clone --bare "$DOTFILES_REPO" "$DOTFILES_DIR" || { error 'The clone failed.'; return 1; }
   if (( DRY_RUN )); then
-    dry_note 'after the clone: set status.showUntrackedFiles=no and the branch upstream, back up conflicts if selected, then check out into ~'
+    dry_note "after the clone: set origin to $DOTFILES_SSH, status.showUntrackedFiles=no and the branch upstream, back up conflicts if selected, then check out into ~"
     return 0
   fi
   branch=$(dotgit symbolic-ref --quiet --short HEAD) || { error 'The new clone is not on a branch.'; return 1; }
-  # The same config the existing setup has: untracked files hidden and an
-  # upstream for dotgit pull, with no fetch refspec.
+  # The same config the existing setup has: an SSH origin for updates and
+  # pushes, untracked files hidden and an upstream for dotgit pull, with no
+  # fetch refspec.
+  info "Switching origin to $DOTFILES_SSH for updates and pushes"
+  run dotgit remote set-url origin "$DOTFILES_SSH" || return 1
   run dotgit config --local status.showUntrackedFiles no || return 1
   run dotgit config --local "branch.$branch.remote" origin || return 1
   run dotgit config --local "branch.$branch.merge" "refs/heads/$branch" || return 1
@@ -1808,7 +1814,12 @@ sync_dotfiles_repo() {
   # Fetching a branch by name only writes FETCH_HEAD: no remote-tracking refs
   # and no config, exactly like dotgit pull.
   info "Fetching $branch from origin ($(dotgit remote get-url origin 2>/dev/null))"
-  run dotgit fetch origin "$branch" || { error 'The fetch failed. Nothing was changed.'; return 1; }
+  if ! run dotgit fetch origin "$branch"; then
+    # Usually an SSH origin on a box with no key loaded. Fetch this once over
+    # HTTPS instead; the origin URL stays as it is.
+    warn "Fetching from origin failed; trying $DOTFILES_REPO once (origin is not changed)."
+    run dotgit fetch "$DOTFILES_REPO" "$branch" || { error 'The fetch failed. Nothing was changed.'; return 1; }
+  fi
   if (( DRY_RUN )); then
     target=$DOT_REMOTE_SHA
     if [[ -z "$target" ]] || ! dotgit cat-file -e "$target^{commit}" 2>/dev/null; then
