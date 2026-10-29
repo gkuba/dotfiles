@@ -74,6 +74,7 @@ bindkey '^[[B' history-substring-search-down # Down arrow
 # ── Line Navigation ──────────────────────────
 bindkey '^[[H' beginning-of-line          # Home
 bindkey '^[[F' end-of-line                # End
+bindkey '^[[3~' delete-char
 
 # Alternative sequences (helps with Ghostty compatibility)
 bindkey '^[OH' beginning-of-line
