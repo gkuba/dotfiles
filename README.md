@@ -86,7 +86,7 @@ Two choices on the System and Fastfetch page control Fastfetch:
 - **Fastfetch images:** keep the custom logo images. Switching it off removes them from your home directory; they stay in the repository.
 - **Fastfetch ASCII:** use Fastfetch's built-in system logo instead of an image, with no top padding.
 
-Outside a KDE Plasma session, the logo's top padding is set to 0 as well. If you remove the bundled images but keep the image logo, place your own PNG files in `~/.config/fastfetch/images`.
+On Hyprland, `.zshrc` runs Fastfetch with `~/.config/fastfetch/hyprland.jsonc` instead (a WM row and no logo top padding); keep it in step with `config.jsonc` when the layout changes. If you remove the bundled images but keep the image logo, place your own PNG files in `~/.config/fastfetch/images`.
 
 The choices are saved in `~/.config/dotfiles-setup/fastfetch.conf` and become the defaults next time. The edited files are hidden from `dotgit status` with Git's skip-worktree flag. Before a dotfiles update they are restored so Git can update them, and the saved preferences are applied again afterwards.
 

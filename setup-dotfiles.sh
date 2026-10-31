@@ -1866,12 +1866,6 @@ install_app_configs() {
 
 # ── 7. Fastfetch preferences ────────────────────────────────────────────────
 
-is_kde_plasma_session() {
-  local desktop="${XDG_CURRENT_DESKTOP:-} ${XDG_SESSION_DESKTOP:-} ${DESKTOP_SESSION:-}"
-  desktop=${desktop^^}
-  [[ "$desktop" =~ (^|[[:space:]:/-])(KDE|PLASMA)([[:space:]:/-]|$) ]]
-}
-
 mark_fastfetch_override() { # path relative to ~ -> hidden from git status when tracked
   is_bare_repo || return 0
   dotgit ls-files --error-unmatch -- "$1" >/dev/null 2>&1 || return 0
@@ -1922,11 +1916,6 @@ apply_fastfetch_preferences() {
       done
       set_fastfetch_top_padding_zero || return 1
       info 'Fastfetch now uses the built-in system logo.'
-    elif ! is_kde_plasma_session; then
-      # Non-KDE desktop sessions use no top padding for the Fastfetch logo.
-      set_fastfetch_top_padding_zero || return 1
-      mark_fastfetch_override .config/fastfetch/config.jsonc || return 1
-      info 'Set the logo top padding to 0 for this non-KDE session.'
     fi
   fi
   run write_fastfetch_prefs "$keep" "$ascii" || { error "Could not save $FASTFETCH_PREFS."; return 1; }
