@@ -1,0 +1,13 @@
+// CPU row helper, called by the command module in config.jsonc / hyprland.jsonc.
+// fastfetch can't edit the name itself, so the caller trims it with sed.
+{
+  "logo": { "type": "none" },
+  "modules": [
+    {
+      "type": "cpu",
+      "key": " ",
+      "temp": true,
+      "format": "{name} ({cores-physical}C/{cores-logical}T){?freq-max} @ {freq-max}{?}{?temperature} - {temperature}{?}"
+    }
+  ]
+}

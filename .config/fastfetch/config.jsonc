@@ -80,10 +80,9 @@
       "key": "{#38;2;248;248;242}├─󰚗{#1;38;2;189;147;249} Mobo    "
     },
     {
-      "type": "cpu",
+      "type": "command",
       "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} CPU     ",
-      "temp": true,
-      "format": "{name}{?freq-max} @ {freq-max}{?}{?temperature} - {temperature}{?}"
+      "text": "fastfetch -c \"$HOME/.config/fastfetch/cpu.jsonc\" --pipe | sed -E 's/\\(TM\\)//g; s/ Core| Processor| [0-9]+-Core//g; s/^ +//'"
     },
     {
       "type": "gpu",
