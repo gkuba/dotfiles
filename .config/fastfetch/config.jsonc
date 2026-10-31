@@ -33,101 +33,94 @@
   "modules": [
     {
       "type": "custom",
-      "format": "╭────  System ─────────────────────────────────────────────╮"
-    },
-    {
-      "type": "title",
-      "key": "  Hostname",
-      "format": "{host-name}",
-      "outputColor": "#8BE9FD"
-    },
-    {
-      "type": "title",
-      "key": "  User    ",
-      "format": "{user-name}",
-      "outputColor": "#FF79C6"
+      "format": "╭───  System ─────────────────────────────────────────────╮"
     },
     {
       "type": "os",
-      "key": "  OS      ",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} OS      ",
       "outputColor": "#50FA7B"
     },
     {
+      "type": "kernel",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} Kernel  "
+    },
+    {
+      "type": "packages",
+      "key": "{#38;2;248;248;242}├─󰏖{#1;38;2;189;147;249} Packages"
+    },
+    {
       "type": "de",
-      "key": "  DE      "
+      "key": "{#38;2;248;248;242}╰─{#1;38;2;189;147;249} DE      "
+    },
+    {
+      "type": "break"
+    },
+    {
+      "type": "custom",
+      "format": "╭───  Shell ──────────────────────────────────────────────╮"
     },
     {
       "type": "terminal",
-      "key": "  Terminal"
+      "key": "{#38;2;248;248;242}├─󰊠{#1;38;2;189;147;249} Terminal"
     },
     {
       "type": "shell",
-      "key": "  Shell   "
+      "key": "{#38;2;248;248;242}╰─{#1;38;2;189;147;249} Shell   "
+    },
+    {
+      "type": "break"
     },
     {
       "type": "custom",
-      "format": "╰──────────────────────────────────────────────────────────╯"
-    },
-    {
-      "type": "custom",
-      "format": "╭────  Hardware ───────────────────────────────────────────╮"
+      "format": "╭───  Hardware ───────────────────────────────────────────╮"
     },
     {
       "type": "board",
-      "key": "  Mobo    "
+      "key": "{#38;2;248;248;242}├─󰚗{#1;38;2;189;147;249} Mobo    "
     },
     {
       "type": "cpu",
-      "key": "  CPU     ",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} CPU     ",
       "temp": true,
       "format": "i9-14900K ({cores-physical}C/{cores-logical}T) @ {freq-max} - {temperature}"
     },
     {
       "type": "gpu",
-      "key": "  GPU     ",
+      "key": "{#38;2;248;248;242}├─󰢮{#1;38;2;189;147;249} GPU     ",
       "temp": true
     },
     {
       "type": "memory",
-      "key": "  Memory  ",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} Memory  ",
       "format": "{percentage-bar} {used} / {total} ({percentage})"
     },
     {
       "type": "swap",
-      "key": "  Swap    ",
+      "key": "{#38;2;248;248;242}├─󰓡{#1;38;2;189;147;249} Swap    ",
       "format": "{percentage-bar} {used} / {total} ({percentage})"
     },
     {
       "type": "disk",
-      "key": "  Root    ",
+      "key": "{#38;2;248;248;242}├─󰋊{#1;38;2;189;147;249} Root    ",
       "folders": "/",
       "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
     },
     {
       "type": "disk",
-      "key": "  Games   ",
+      "key": "{#38;2;248;248;242}├─󰺵{#1;38;2;189;147;249} Games   ",
       "folders": "/games",
       "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
     },
     {
-      "type": "localip",
-      "key": "  Network ",
-      "format": "{ipv4}"
-    },
-    {
       "type": "uptime",
-      "key": "  Uptime  "
+      "key": "{#38;2;248;248;242}├─󰅐{#1;38;2;189;147;249} Uptime  "
     },
     {
       "type": "command",
-      "key": "  Gamepad ",
+      "key": "{#38;2;248;248;242}╰─󰊗{#1;38;2;189;147;249} Gamepad ",
       "text": "for d in /sys/bus/usb/devices/*; do [ -r \"$d/idVendor\" ] || continue; [ \"$(cat \"$d/idVendor\")\" = 2dc8 ] || continue; grep -qi 8BitDo \"$d/manufacturer\" 2>/dev/null || continue; grep -qi 'Ultimate 2' \"$d/product\" 2>/dev/null || continue; printf '8BitDo Ultimate 2 Wireless Controller'; break; done",
       "useOutput": "stdout",
       "format": "{result}"
-    },
-    {
-      "type": "custom",
-      "format": "╰──────────────────────────────────────────────────────────╯"
     },
     {
       "type": "colors",
