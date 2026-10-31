@@ -6,7 +6,8 @@
     "height": 17,
     "width": 34,
     "padding": {
-      "top": 0
+      "top": 0,
+      "right": 2
     },
     "cache": "regen"
   },
@@ -82,7 +83,7 @@
       "type": "cpu",
       "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} CPU     ",
       "temp": true,
-      "format": "i9-14900K ({cores-physical}C/{cores-logical}T) @ {freq-max} - {temperature}"
+      "format": "{name}{?freq-max} @ {freq-max}{?}{?temperature} - {temperature}{?}"
     },
     {
       "type": "gpu",
@@ -112,15 +113,15 @@
       "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
     },
     {
-      "type": "uptime",
-      "key": "{#38;2;248;248;242}├─󰅐{#1;38;2;189;147;249} Uptime  "
-    },
-    {
       "type": "command",
-      "key": "{#38;2;248;248;242}╰─󰊗{#1;38;2;189;147;249} Gamepad ",
+      "key": "{#38;2;248;248;242}├─󰊗{#1;38;2;189;147;249} Gamepad ",
       "text": "for d in /sys/bus/usb/devices/*; do [ -r \"$d/idVendor\" ] || continue; [ \"$(cat \"$d/idVendor\")\" = 2dc8 ] || continue; grep -qi 8BitDo \"$d/manufacturer\" 2>/dev/null || continue; grep -qi 'Ultimate 2' \"$d/product\" 2>/dev/null || continue; printf '8BitDo Ultimate 2 Wireless Controller'; break; done",
       "useOutput": "stdout",
       "format": "{result}"
+    },
+    {
+      "type": "uptime",
+      "key": "{#38;2;248;248;242}╰─󰅐{#1;38;2;189;147;249} Uptime  "
     },
     {
       "type": "colors",
