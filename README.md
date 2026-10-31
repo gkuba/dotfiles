@@ -1,8 +1,6 @@
 # Dotfiles
 
-This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys the dotfiles, syncs Zsh plugins, installs a hostname-specific Starship configuration, applies Fastfetch preferences, and can set Zsh as the login shell and update the managed hosts block.
-
-Other Starship themes are available at https://github.com/gkuba/Starship-Configs.
+This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys the dotfiles (including the Starship configuration), syncs Zsh plugins, applies Fastfetch preferences, and can set Zsh as the login shell and update the managed hosts block.
 
 ## Quick setup
 
@@ -25,7 +23,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/gkuba/dotfiles/master/setup-
 The script is a full-screen wizard built on [InstallScriptTemplate](https://github.com/gkuba/InstallScriptTemplate):
 
 1. **Packages:** Zsh, Starship, fzf, eza, Fastfetch and Neovim; Git, curl, 7zip, unzip, iproute2 and the Fira Code font.
-2. **Dotfiles:** the bare repository, Zsh plugins, the Starship prompt, backing up conflicting files, and standalone app configs.
+2. **Dotfiles:** the bare repository, Zsh plugins, backing up conflicting files, and standalone app configs.
 3. **System and Fastfetch:** a full system update, Zsh as the login shell, the hosts block, and the Fastfetch image choices.
 4. **Review selections:** every item with its status, where single items can be switched on or off.
 5. **Review the plan:** what will run. Anything that would make the run fail is shown as a blocker, and the run cannot start until it is fixed.
@@ -33,7 +31,7 @@ The script is a full-screen wizard built on [InstallScriptTemplate](https://gith
 
 Keys: ↑↓ move, Space toggles, Enter goes on, B goes back, Esc quits. On the install screen, Ctrl+C stops after the current step.
 
-The defaults match a plain run: every package, the bare repository, Zsh plugins, Starship and the Zsh login shell are selected; the hosts block and the system update are not.
+The defaults match a plain run: every package, the bare repository, Zsh plugins and the Zsh login shell are selected; the hosts block and the system update are not.
 
 ## Command-line options
 
@@ -41,7 +39,7 @@ Selection options choose exactly what runs and open the wizard at the review scr
 
 ```text
 -p, --packages     Shell tools, utilities, and the Fira Code font
--d, --dotfiles     Bare dotfiles repo (~/dotfiles), Zsh plugins, Starship prompt
+-d, --dotfiles     Bare dotfiles repo (~/dotfiles) and Zsh plugins
 -s, --system       Zsh as the login shell and the managed /etc/hosts block
 -u, --update       Full system update before packages are installed
 -A, --all          -p, -d and -s (add -u for a system update)
@@ -79,7 +77,7 @@ The origin URL is left as it is. Git runs without prompts during the install ste
 
 ## Starship configuration
 
-The Starship step installs the config for the current hostname: pixel uses pixel-starship.toml, Pi hosts (pi, pi-*, raspberrypi*, pixelshed) use pi-starship.toml, and other hosts use starship.toml. An existing config is backed up under ~/.dotfiles-backup before it is replaced, and left alone when it is already current.
+The Starship config is tracked in this repository as `.config/starship.toml` and is deployed with the other dotfiles. On machines without the bare repository, **App configs only** downloads it along with the Neovim and Fastfetch configs; an existing file is backed up under ~/.dotfiles-backup before it is replaced, and left alone when it is already current.
 
 ## Fastfetch preferences
 
@@ -94,7 +92,7 @@ The choices are saved in `~/.config/dotfiles-setup/fastfetch.conf` and become th
 
 ## Standalone app configs
 
-**App configs only** downloads just the Neovim and Fastfetch configs, for machines that do not use the bare repository. It cannot be combined with the bare repository, since it would overwrite files the repository tracks. Existing files are backed up under ~/.dotfiles-backup first.
+**App configs only** downloads just the Neovim, Fastfetch and Starship configs, for machines that do not use the bare repository. It cannot be combined with the bare repository, since it would overwrite files the repository tracks. Existing files are backed up under ~/.dotfiles-backup first.
 
 ## Hosts block
 

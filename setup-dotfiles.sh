@@ -4,8 +4,8 @@
 #
 # Interactive installer for gkuba's shell setup on pacman (Arch, CachyOS) and
 # apt (Debian, Ubuntu) systems: shell tools, the bare dotfiles repository in
-# ~/dotfiles, Zsh plugins, the Starship prompt, Fastfetch preferences, the Zsh
-# login shell and the managed /etc/hosts block.
+# ~/dotfiles (including the Starship prompt), Zsh plugins, Fastfetch
+# preferences, the Zsh login shell and the managed /etc/hosts block.
 #
 # Built on the Violet-Noir installer template
 # (~/Projects/InstallScriptTemplate). The CUSTOMIZE sections hold this
@@ -44,7 +44,7 @@ review screen; nothing runs until you confirm the plan and enter your password.
 
 Selections:
   -p, --packages     Shell tools, utilities, and the Fira Code font
-  -d, --dotfiles     Bare dotfiles repo (~/dotfiles), Zsh plugins, Starship prompt
+  -d, --dotfiles     Bare dotfiles repo (~/dotfiles) and Zsh plugins
   -s, --system       Zsh as the login shell and the managed /etc/hosts block
   -u, --update       Full system update before packages are installed
   -A, --all          -p, -d and -s (add -u for a system update)
@@ -58,7 +58,8 @@ Other:
 Short options can be combined, e.g. ${0##*/} -pdn
 
 The wizard also offers backing up files that block the first checkout, and
-standalone Neovim and Fastfetch configs for machines without the bare repo.
+standalone Neovim, Fastfetch and Starship configs for machines without the
+bare repo.
 Fastfetch image choices are saved in ~/.config/dotfiles-setup/fastfetch.conf
 and reapplied after every dotfiles update.
 
@@ -112,7 +113,6 @@ apply_preselection() {
   for i in "${!UTIL_SELECTED[@]}"; do UTIL_SELECTED[i]=$PRE_PACKAGES; done
   DOTS_SELECTED[DOT_REPO]=$PRE_DOTFILES
   DOTS_SELECTED[DOT_ZSH]=$PRE_DOTFILES
-  DOTS_SELECTED[DOT_STARSHIP]=$PRE_DOTFILES
   DOTS_SELECTED[DOT_BACKUP]=0
   DOTS_SELECTED[DOT_STANDALONE]=0
   SYS_SELECTED[SYS_UPDATE]=$PRE_UPDATE
@@ -188,7 +188,6 @@ DOTFILES_SSH='git@github.com:gkuba/dotfiles.git'       # origin after the clone,
 DOTFILES_DIR="$HOME/dotfiles"
 DOTFILES_BACKUP_DIR="$HOME/.dotfiles-backup"
 DOTFILES_RAW='https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master'
-STARSHIP_CONFIG_REPO='https://raw.githubusercontent.com/gkuba/Starship-Configs/main'
 HOSTS_GIST_URL='https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt'
 HOSTS_BLOCK_START='# >>> gkuba custom hosts >>>'
 HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
@@ -196,7 +195,6 @@ ZSH_PLUGIN_REPOS=( zsh-users/zsh-autosuggestions zsh-users/zsh-syntax-highlighti
 FASTFETCH_CONFIG="$HOME/.config/fastfetch/config.jsonc"
 FASTFETCH_PREFS="$HOME/.config/dotfiles-setup/fastfetch.conf"
 BACKUP_STAMP=$(date +%Y%m%d-%H%M%S)   # one backup folder per run
-HOST_NAME=$(uname -n)
 
 # Install steps have no keyboard, so Git must fail instead of asking for a
 # password or an SSH passphrase (ssh reads those from the terminal directly).
@@ -224,15 +222,6 @@ detect_package_manager() { # -> PKG_MANAGER (pacman, apt or empty), OS_ID, OS_LI
 }
 detect_package_manager
 
-starship_config_for_host() { # hostname -> config file name in Starship-Configs
-  case "$1" in
-    pixel) printf 'pixel-starship.toml' ;;
-    pi|pi-*|raspberrypi*|pixelshed) printf 'pi-starship.toml' ;;
-    *) printf 'starship.toml' ;;
-  esac
-}
-STARSHIP_FILE=$(starship_config_for_host "$HOST_NAME")
-
 FONT_PKG=ttf-fira-code
 [[ "$PKG_MANAGER" == apt ]] && FONT_PKG=fonts-firacode
 
@@ -255,17 +244,17 @@ fi
 # action groups (kind "action") show apply/skip. Review labels fit 17 columns.
 SHELL_ITEMS=( zsh starship fzf eza fastfetch neovim )
 UTIL_ITEMS=( git curl 7zip unzip iproute2 "$FONT_PKG" )
-DOTS_ITEMS=( 'Dotfiles repo' 'Zsh plugins' 'Starship prompt' 'Back up conflicts' 'App configs only' )
+DOTS_ITEMS=( 'Dotfiles repo' 'Zsh plugins' 'Back up conflicts' 'App configs only' )
 SYS_ITEMS=( 'System update' 'Zsh login shell' 'Hosts block' 'Fastfetch images' 'Fastfetch ASCII' )
 
-DOT_REPO=0 DOT_ZSH=1 DOT_STARSHIP=2 DOT_BACKUP=3 DOT_STANDALONE=4
+DOT_REPO=0 DOT_ZSH=1 DOT_BACKUP=2 DOT_STANDALONE=3
 SYS_UPDATE=0 SYS_LOGIN=1 SYS_HOSTS=2 SYS_FF_IMAGES=3 SYS_FF_ASCII=4
 
 # Defaults match a plain run of the old script: every package, the repo,
-# plugins, Starship and the Zsh login shell; hosts block off.
+# plugins and the Zsh login shell; hosts block off.
 SHELL_SELECTED=(1 1 1 1 1 1) SHELL_INSTALLED=(0 0 0 0 0 0)
 UTIL_SELECTED=(1 1 1 1 1 1)  UTIL_INSTALLED=(0 0 0 0 0 0)
-DOTS_SELECTED=(1 1 1 0 0)
+DOTS_SELECTED=(1 1 0 0)
 SYS_SELECTED=(0 1 0 "$FF_SAVED_IMAGES" "$FF_SAVED_ASCII")
 
 # Groups, in review-screen order. Each entry names the arrays above.
@@ -278,7 +267,7 @@ GROUP_COLUMN=( 0 0 1 1 )              # review screen: 0 = left column, 1 = righ
 GROUP_SUMMARY=(                       # one line each on the welcome screen
   'zsh, starship, fzf, eza, fastfetch, neovim'
   'git, curl, 7zip, unzip, iproute2, Fira Code'
-  'bare repo in ~/dotfiles, Zsh plugins, Starship'
+  'bare repo in ~/dotfiles, Zsh plugins'
   'login shell, hosts block, Fastfetch images'
 )
 
@@ -298,9 +287,8 @@ PACKAGE_PREVIOUS=(0 0)
 DOTS_DETAILS=(
   "Clone or fast-forward ~/dotfiles and check out its files into ~"
   'Clone or update the three Zsh plugins in ~/.zsh'
-  "The Starship config for this host ($STARSHIP_FILE)"
   'Move files that would block the checkout into ~/.dotfiles-backup first'
-  'Only the Neovim and Fastfetch configs, for machines without ~/dotfiles'
+  'Only the Neovim, Fastfetch and Starship configs, for machines without ~/dotfiles'
 )
 if [[ "$PKG_MANAGER" == apt ]]; then __update_detail='apt-get update and upgrade before installing packages'
 else __update_detail='pacman -Syu before installing packages'
@@ -320,13 +308,13 @@ PAGE3_TITLE='System and Fastfetch' PAGE3_INTRO='Choose system changes and Fastfe
 # fails; other failures offer Continue or Stop. phase_enabled (below) decides
 # which steps run for the current selections.
 PHASE_TITLES=( 'System update' 'Install packages' 'Login shell' 'Dotfiles repo' 'Zsh plugins'
-               'Starship prompt' 'App configs' 'Fastfetch preferences' 'Hosts file' )
+               'App configs' 'Fastfetch preferences' 'Hosts file' )
 PHASE_FUNCS=( update_system install_selected_packages set_login_shell sync_dotfiles_repo sync_zsh_plugins
-              install_starship_config install_app_configs apply_fastfetch_preferences update_hosts_block )
+              install_app_configs apply_fastfetch_preferences update_hosts_block )
 PHASE_DONE_TEXT=( 'System updated.' 'Packages installed.' 'Login shell set.' 'Dotfiles repo is current.'
-                  'Zsh plugins are current.' 'Starship prompt configured.' 'App configs installed.'
+                  'Zsh plugins are current.' 'App configs installed.'
                   'Fastfetch preferences applied.' 'Hosts file updated.' )
-PHASE_FATAL=( 1 1 0 0 0 0 0 0 0 )
+PHASE_FATAL=( 1 1 0 0 0 0 0 0 )
 
 fastfetch_choices_changed() {
   (( SYS_SELECTED[SYS_FF_IMAGES] != FF_SAVED_IMAGES || SYS_SELECTED[SYS_FF_ASCII] != FF_SAVED_ASCII ))
@@ -339,12 +327,11 @@ phase_enabled() { # step number (1-based) -> success when it should run
     3) (( SYS_SELECTED[SYS_LOGIN] )) ;;
     4) (( DOTS_SELECTED[DOT_REPO] )) ;;
     5) (( DOTS_SELECTED[DOT_ZSH] )) ;;
-    6) (( DOTS_SELECTED[DOT_STARSHIP] )) ;;
-    7) (( DOTS_SELECTED[DOT_STANDALONE] )) ;;
+    6) (( DOTS_SELECTED[DOT_STANDALONE] )) ;;
     # Reapplied after every repo update, since the update restores the
     # tracked Fastfetch files first.
-    8) (( DOTS_SELECTED[DOT_REPO] || DOTS_SELECTED[DOT_STANDALONE] )) || fastfetch_choices_changed ;;
-    9) (( SYS_SELECTED[SYS_HOSTS] )) ;;
+    7) (( DOTS_SELECTED[DOT_REPO] || DOTS_SELECTED[DOT_STANDALONE] )) || fastfetch_choices_changed ;;
+    8) (( SYS_SELECTED[SYS_HOSTS] )) ;;
     *) return 1 ;;
   esac
 }
@@ -781,8 +768,7 @@ collect_plan_blockers() {
   local name
   local -a unavailable=() changed=()
   (( DOTS_SELECTED[DOT_REPO] || DOTS_SELECTED[DOT_ZSH] )) && require_tool git 'The dotfiles repo and Zsh plugins'
-  (( DOTS_SELECTED[DOT_STARSHIP] )) && require_tool starship 'The Starship prompt'
-  (( DOTS_SELECTED[DOT_STARSHIP] || DOTS_SELECTED[DOT_STANDALONE] || SYS_SELECTED[SYS_HOSTS] )) \
+  (( DOTS_SELECTED[DOT_STANDALONE] || SYS_SELECTED[SYS_HOSTS] )) \
     && require_tool curl 'Config downloads and the hosts update'
   (( SYS_SELECTED[SYS_LOGIN] )) && require_tool zsh 'Zsh as the login shell'
 
@@ -856,8 +842,7 @@ plan_group_notes() { # group index -> PLAN_NOTES array
         fi
       fi
       (( DOTS_SELECTED[DOT_ZSH] )) && PLAN_NOTES+=('plugins in ~/.zsh: autosuggestions, syntax-highlighting, history-substring-search')
-      (( DOTS_SELECTED[DOT_STARSHIP] )) && PLAN_NOTES+=("Starship: $STARSHIP_FILE for host $HOST_NAME")
-      (( DOTS_SELECTED[DOT_STANDALONE] )) && PLAN_NOTES+=('download nvim/init.lua and fastfetch/config.jsonc; existing files are backed up')
+      (( DOTS_SELECTED[DOT_STANDALONE] )) && PLAN_NOTES+=('download nvim/init.lua, fastfetch/config.jsonc and starship.toml; existing files are backed up')
       ;;
     3)
       if (( SYS_SELECTED[SYS_UPDATE] )); then
@@ -870,7 +855,7 @@ plan_group_notes() { # group index -> PLAN_NOTES array
         fi
       fi
       (( SYS_SELECTED[SYS_HOSTS] )) && PLAN_NOTES+=("replace the managed block from the Gist; backup /etc/hosts.bak.$BACKUP_STAMP")
-      if phase_enabled 8; then
+      if phase_enabled 7; then
         local images='keep custom images' logo='image logo'
         (( SYS_SELECTED[SYS_FF_IMAGES] )) || images='remove custom images'
         (( SYS_SELECTED[SYS_FF_ASCII] )) && logo='built-in logo'
@@ -1870,22 +1855,15 @@ sync_zsh_plugins() {
   success 'Zsh plugins are current.'
 }
 
-# ── 6. Starship prompt ──────────────────────────────────────────────────────
-
-install_starship_config() {
-  need_cmd starship 'starship is not installed.' || return 1
-  info "Host $HOST_NAME uses $STARSHIP_FILE"
-  install_downloaded_config "$STARSHIP_CONFIG_REPO/$STARSHIP_FILE" "$HOME/.config/starship.toml"
-}
-
-# ── 7. Standalone app configs ───────────────────────────────────────────────
+# ── 6. Standalone app configs ───────────────────────────────────────────────
 
 install_app_configs() {
   install_downloaded_config "$DOTFILES_RAW/.config/nvim/init.lua" "$HOME/.config/nvim/init.lua" || return 1
-  install_downloaded_config "$DOTFILES_RAW/.config/fastfetch/config.jsonc" "$FASTFETCH_CONFIG"
+  install_downloaded_config "$DOTFILES_RAW/.config/fastfetch/config.jsonc" "$FASTFETCH_CONFIG" || return 1
+  install_downloaded_config "$DOTFILES_RAW/.config/starship.toml" "$HOME/.config/starship.toml"
 }
 
-# ── 8. Fastfetch preferences ────────────────────────────────────────────────
+# ── 7. Fastfetch preferences ────────────────────────────────────────────────
 
 is_kde_plasma_session() {
   local desktop="${XDG_CURRENT_DESKTOP:-} ${XDG_SESSION_DESKTOP:-} ${DESKTOP_SESSION:-}"
@@ -1951,7 +1929,7 @@ apply_fastfetch_preferences() {
   success "Fastfetch preferences saved in $TILDE (images: $keep, built-in logo: $ascii)."
 }
 
-# ── 9. Hosts file ───────────────────────────────────────────────────────────
+# ── 8. Hosts file ───────────────────────────────────────────────────────────
 
 hosts_markers_valid() { # file -> success when the managed markers are absent or well formed
   awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
