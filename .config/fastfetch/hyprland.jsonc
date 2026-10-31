@@ -1,0 +1,130 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "kitty-direct",
+    "source": "~/.config/fastfetch/images/*.png",
+    "height": 17,
+    "width": 34,
+    "padding": {
+      "top": 0
+    },
+    "cache": "regen"
+  },
+  "display": {
+    "separator": " 󰑃  ",
+    "color": {
+      "keys": "#BD93F9",
+      "title": "#FF79C6",
+      "output": "#F8F8F2",
+      "separator": "#6272A4"
+    },
+    "percent": {
+      "type": ["num", "bar"],
+      "color": {
+        "green": "#50FA7B",
+        "yellow": "#F1FA8C",
+        "red": "#FF79C6"
+      }
+    },
+    "bar": {
+      "width": 10
+    }
+  },
+  "modules": [
+    {
+      "type": "custom",
+      "format": "╭───  System ─────────────────────────────────────────────╮"
+    },
+    {
+      "type": "os",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} OS      ",
+      "outputColor": "#50FA7B"
+    },
+    {
+      "type": "kernel",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} Kernel  "
+    },
+    {
+      "type": "packages",
+      "key": "{#38;2;248;248;242}├─󰏖{#1;38;2;189;147;249} Packages"
+    },
+    {
+      "type": "wm",
+      "key": "{#38;2;248;248;242}╰─{#1;38;2;189;147;249} WM      "
+    },
+    {
+      "type": "break"
+    },
+    {
+      "type": "custom",
+      "format": "╭───  Shell ──────────────────────────────────────────────╮"
+    },
+    {
+      "type": "terminal",
+      "key": "{#38;2;248;248;242}├─󰊠{#1;38;2;189;147;249} Terminal"
+    },
+    {
+      "type": "shell",
+      "key": "{#38;2;248;248;242}╰─{#1;38;2;189;147;249} Shell   "
+    },
+    {
+      "type": "break"
+    },
+    {
+      "type": "custom",
+      "format": "╭───  Hardware ───────────────────────────────────────────╮"
+    },
+    {
+      "type": "board",
+      "key": "{#38;2;248;248;242}├─󰚗{#1;38;2;189;147;249} Mobo    "
+    },
+    {
+      "type": "cpu",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} CPU     ",
+      "temp": true,
+      "format": "i9-14900K ({cores-physical}C/{cores-logical}T) @ {freq-max} - {temperature}"
+    },
+    {
+      "type": "gpu",
+      "key": "{#38;2;248;248;242}├─󰢮{#1;38;2;189;147;249} GPU     ",
+      "temp": true
+    },
+    {
+      "type": "memory",
+      "key": "{#38;2;248;248;242}├─{#1;38;2;189;147;249} Memory  ",
+      "format": "{percentage-bar} {used} / {total} ({percentage})"
+    },
+    {
+      "type": "swap",
+      "key": "{#38;2;248;248;242}├─󰓡{#1;38;2;189;147;249} Swap    ",
+      "format": "{percentage-bar} {used} / {total} ({percentage})"
+    },
+    {
+      "type": "disk",
+      "key": "{#38;2;248;248;242}├─󰋊{#1;38;2;189;147;249} Root    ",
+      "folders": "/",
+      "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
+    },
+    {
+      "type": "disk",
+      "key": "{#38;2;248;248;242}├─󰺵{#1;38;2;189;147;249} Games   ",
+      "folders": "/games",
+      "format": "{size-percentage-bar} {size-used} / {size-total} ({size-percentage})"
+    },
+    {
+      "type": "uptime",
+      "key": "{#38;2;248;248;242}├─󰅐{#1;38;2;189;147;249} Uptime  "
+    },
+    {
+      "type": "command",
+      "key": "{#38;2;248;248;242}╰─󰊗{#1;38;2;189;147;249} Gamepad ",
+      "text": "for d in /sys/bus/usb/devices/*; do [ -r \"$d/idVendor\" ] || continue; [ \"$(cat \"$d/idVendor\")\" = 2dc8 ] || continue; grep -qi 8BitDo \"$d/manufacturer\" 2>/dev/null || continue; grep -qi 'Ultimate 2' \"$d/product\" 2>/dev/null || continue; printf '8BitDo Ultimate 2 Wireless Controller'; break; done",
+      "useOutput": "stdout",
+      "format": "{result}"
+    },
+    {
+      "type": "colors",
+      "symbol": "circle"
+    }
+  ]
+}

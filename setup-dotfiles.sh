@@ -193,6 +193,7 @@ HOSTS_BLOCK_START='# >>> gkuba custom hosts >>>'
 HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
 ZSH_PLUGIN_REPOS=( zsh-users/zsh-autosuggestions zsh-users/zsh-syntax-highlighting zsh-users/zsh-history-substring-search )
 FASTFETCH_CONFIG="$HOME/.config/fastfetch/config.jsonc"
+FASTFETCH_HYPR_CONFIG="$HOME/.config/fastfetch/hyprland.jsonc" # used by .zshrc on Hyprland
 FASTFETCH_PREFS="$HOME/.config/dotfiles-setup/fastfetch.conf"
 BACKUP_STAMP=$(date +%Y%m%d-%H%M%S)   # one backup folder per run
 
@@ -1742,7 +1743,7 @@ restore_fastfetch_overrides() {
   while IFS= read -r -d '' entry; do
     [[ "${entry:0:1}" == S ]] || continue
     case "${entry:2}" in
-      .config/fastfetch/config.jsonc|.config/fastfetch/images/*) paths+=("${entry:2}") ;;
+      .config/fastfetch/config.jsonc|.config/fastfetch/hyprland.jsonc|.config/fastfetch/images/*) paths+=("${entry:2}") ;;
     esac
   done < <(dotgit ls-files -v -z -- .config/fastfetch)
   ((${#paths[@]})) || return 0
@@ -1910,12 +1911,16 @@ apply_fastfetch_preferences() {
       info "Removed ${#images[@]} custom image(s) from ~ (they stay in the repo)."
     fi
     if [[ "$ascii" == true ]]; then
-      run sed -i \
-        -e 's/"type": "kitty-direct"/"type": "builtin"/' \
-        -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
-        "$FASTFETCH_CONFIG" || { error 'Could not switch Fastfetch to the built-in logo.'; return 1; }
+      local file
+      for file in "$FASTFETCH_CONFIG" "$FASTFETCH_HYPR_CONFIG"; do
+        [[ -f "$file" ]] || continue
+        run sed -i \
+          -e 's/"type": "kitty-direct"/"type": "builtin"/' \
+          -e 's|"source": "~/.config/fastfetch/images/\*\.png"|"source": ""|' \
+          "$file" || { error 'Could not switch Fastfetch to the built-in logo.'; return 1; }
+        mark_fastfetch_override "${file#"$HOME"/}" || return 1
+      done
       set_fastfetch_top_padding_zero || return 1
-      mark_fastfetch_override .config/fastfetch/config.jsonc || return 1
       info 'Fastfetch now uses the built-in system logo.'
     elif ! is_kde_plasma_session; then
       # Non-KDE desktop sessions use no top padding for the Fastfetch logo.

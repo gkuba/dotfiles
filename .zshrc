@@ -8,7 +8,14 @@
 # ─────────────────────────────────────────────
 # Fastfetch on terminal startup
 # ─────────────────────────────────────────────
-command -v fastfetch >/dev/null 2>&1 && fastfetch
+if command -v fastfetch >/dev/null 2>&1; then
+    # Hyprland gets its own layout (WM row, no logo top padding)
+    if [[ -n "$HYPRLAND_INSTANCE_SIGNATURE" && -f ~/.config/fastfetch/hyprland.jsonc ]]; then
+        fastfetch -c ~/.config/fastfetch/hyprland.jsonc
+    else
+        fastfetch
+    fi
+fi
 
 # ─────────────────────────────────────────────
 # Source common shell files
