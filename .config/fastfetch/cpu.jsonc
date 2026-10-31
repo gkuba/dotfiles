@@ -7,7 +7,7 @@
       "type": "cpu",
       "key": " ",
       "temp": true,
-      "format": "{name} ({cores-physical}C/{cores-logical}T){?freq-max} @ {freq-max}{?}{?temperature} - {temperature}{?}"
+      "format": "{name} ({cores-physical}C/{cores-logical}T){?temperature} - {temperature}{?}"
     }
   ]
 }
