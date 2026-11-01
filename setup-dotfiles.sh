@@ -5,7 +5,7 @@
 # Interactive installer for gkuba's shell setup on pacman (Arch, CachyOS) and
 # apt (Debian, Ubuntu) systems: shell tools, the bare dotfiles repository in
 # ~/dotfiles (including the Starship prompt), Zsh plugins, Fastfetch
-# preferences, the Zsh login shell and the managed /etc/hosts block.
+# preferences and the Zsh login shell.
 #
 # Built on the Violet-Noir installer template
 # (~/Projects/InstallScriptTemplate). The CUSTOMIZE sections hold this
@@ -45,7 +45,7 @@ review screen; nothing runs until you confirm the plan and enter your password.
 Selections:
   -p, --packages     Shell tools, utilities, and the Fira Code font
   -d, --dotfiles     Bare dotfiles repo (~/dotfiles) and Zsh plugins
-  -s, --system       Zsh as the login shell and the managed /etc/hosts block
+  -s, --system       Zsh as the login shell
   -u, --update       Full system update before packages are installed
   -A, --all          -p, -d and -s (add -u for a system update)
 
@@ -117,7 +117,6 @@ apply_preselection() {
   DOTS_SELECTED[DOT_STANDALONE]=0
   SYS_SELECTED[SYS_UPDATE]=$PRE_UPDATE
   SYS_SELECTED[SYS_LOGIN]=$PRE_SYSTEM
-  SYS_SELECTED[SYS_HOSTS]=$PRE_SYSTEM
   sync_groups_from_items
   log_event "Preselected from options: packages=$PRE_PACKAGES dotfiles=$PRE_DOTFILES system=$PRE_SYSTEM update=$PRE_UPDATE"
 }
@@ -188,9 +187,6 @@ DOTFILES_SSH='git@github.com:gkuba/dotfiles.git'       # origin after the clone,
 DOTFILES_DIR="$HOME/dotfiles"
 DOTFILES_BACKUP_DIR="$HOME/.dotfiles-backup"
 DOTFILES_RAW='https://raw.githubusercontent.com/gkuba/dotfiles/refs/heads/master'
-HOSTS_GIST_URL='https://gist.githubusercontent.com/gkuba/328f47706216baaf6cdc6c5519bf84c2/raw/73b9f6d7bd6cff4cb44d0da872747a1cbce66e0d/gistfile1.txt'
-HOSTS_BLOCK_START='# >>> gkuba custom hosts >>>'
-HOSTS_BLOCK_END='# <<< gkuba custom hosts <<<'
 ZSH_PLUGIN_REPOS=( zsh-users/zsh-autosuggestions zsh-users/zsh-syntax-highlighting zsh-users/zsh-history-substring-search )
 FASTFETCH_CONFIG="$HOME/.config/fastfetch/config.jsonc"
 FASTFETCH_HYPR_CONFIG="$HOME/.config/fastfetch/hyprland.jsonc" # used by .zshrc on Hyprland
@@ -246,17 +242,17 @@ fi
 SHELL_ITEMS=( zsh starship fzf eza fastfetch neovim )
 UTIL_ITEMS=( git curl 7zip unzip iproute2 "$FONT_PKG" )
 DOTS_ITEMS=( 'Dotfiles repo' 'Zsh plugins' 'Back up conflicts' 'App configs only' )
-SYS_ITEMS=( 'System update' 'Zsh login shell' 'Hosts block' 'Fastfetch images' 'Fastfetch ASCII' )
+SYS_ITEMS=( 'System update' 'Zsh login shell' 'Fastfetch images' 'Fastfetch ASCII' )
 
 DOT_REPO=0 DOT_ZSH=1 DOT_BACKUP=2 DOT_STANDALONE=3
-SYS_UPDATE=0 SYS_LOGIN=1 SYS_HOSTS=2 SYS_FF_IMAGES=3 SYS_FF_ASCII=4
+SYS_UPDATE=0 SYS_LOGIN=1 SYS_FF_IMAGES=2 SYS_FF_ASCII=3
 
 # Defaults match a plain run of the old script: every package, the repo,
-# plugins and the Zsh login shell; hosts block off.
+# plugins and the Zsh login shell.
 SHELL_SELECTED=(1 1 1 1 1 1) SHELL_INSTALLED=(0 0 0 0 0 0)
 UTIL_SELECTED=(1 1 1 1 1 1)  UTIL_INSTALLED=(0 0 0 0 0 0)
 DOTS_SELECTED=(1 1 0 0)
-SYS_SELECTED=(0 1 0 "$FF_SAVED_IMAGES" "$FF_SAVED_ASCII")
+SYS_SELECTED=(0 1 "$FF_SAVED_IMAGES" "$FF_SAVED_ASCII")
 
 # Groups, in review-screen order. Each entry names the arrays above.
 GROUP_TITLES=( 'Shell tools' 'Utilities and font' 'Dotfiles' 'System and Fastfetch' )
@@ -269,7 +265,7 @@ GROUP_SUMMARY=(                       # one line each on the welcome screen
   'zsh, starship, fzf, eza, fastfetch, neovim'
   'git, curl, 7zip, unzip, iproute2, Fira Code'
   'bare repo in ~/dotfiles, Zsh plugins'
-  'login shell, hosts block, Fastfetch images'
+  'login shell, Fastfetch images'
 )
 
 # Wizard page 1 shows package groups as checkboxes (one per package group);
@@ -297,7 +293,6 @@ fi
 SYS_DETAILS=(
   "$__update_detail"
   'Change your login shell to Zsh; log out and back in afterwards'
-  'Refresh the gkuba block in /etc/hosts from the Gist; backs up first'
   'Keep the custom logo images (off removes them from ~, not the repo)'
   "Use Fastfetch's built-in logo instead of an image"
 )
@@ -309,13 +304,13 @@ PAGE3_TITLE='System and Fastfetch' PAGE3_INTRO='Choose system changes and Fastfe
 # fails; other failures offer Continue or Stop. phase_enabled (below) decides
 # which steps run for the current selections.
 PHASE_TITLES=( 'System update' 'Install packages' 'Login shell' 'Dotfiles repo' 'Zsh plugins'
-               'App configs' 'Fastfetch preferences' 'Hosts file' )
+               'App configs' 'Fastfetch preferences' )
 PHASE_FUNCS=( update_system install_selected_packages set_login_shell sync_dotfiles_repo sync_zsh_plugins
-              install_app_configs apply_fastfetch_preferences update_hosts_block )
+              install_app_configs apply_fastfetch_preferences )
 PHASE_DONE_TEXT=( 'System updated.' 'Packages installed.' 'Login shell set.' 'Dotfiles repo is current.'
                   'Zsh plugins are current.' 'App configs installed.'
-                  'Fastfetch preferences applied.' 'Hosts file updated.' )
-PHASE_FATAL=( 1 1 0 0 0 0 0 0 )
+                  'Fastfetch preferences applied.' )
+PHASE_FATAL=( 1 1 0 0 0 0 0 )
 
 fastfetch_choices_changed() {
   (( SYS_SELECTED[SYS_FF_IMAGES] != FF_SAVED_IMAGES || SYS_SELECTED[SYS_FF_ASCII] != FF_SAVED_ASCII ))
@@ -332,7 +327,6 @@ phase_enabled() { # step number (1-based) -> success when it should run
     # Reapplied after every repo update, since the update restores the
     # tracked Fastfetch files first.
     7) (( DOTS_SELECTED[DOT_REPO] || DOTS_SELECTED[DOT_STANDALONE] )) || fastfetch_choices_changed ;;
-    8) (( SYS_SELECTED[SYS_HOSTS] )) ;;
     *) return 1 ;;
   esac
 }
@@ -672,7 +666,7 @@ package_installed() { # name -> success when installed by the package manager or
 }
 
 # Read-only state gathered once, on the "Checking this system" screen.
-APT_UNAVAILABLE=() LOGIN_SHELL_NOW='' HOSTS_MARKERS_OK=1
+APT_UNAVAILABLE=() LOGIN_SHELL_NOW=''
 DOT_STATE=missing DOT_BRANCH='' DOT_HEAD='' DOT_REMOTE_SHA='' DOT_INDEX_EMPTY=0 DOT_BEHIND=''
 DOT_CHANGES=() CONFLICTS=()
 
@@ -696,8 +690,6 @@ check_package_status() { # fills every package group's *_INSTALLED array, then i
     done
   fi
   LOGIN_SHELL_NOW=$(getent passwd "$(id -un)" 2>/dev/null | cut -d: -f7)
-  HOSTS_MARKERS_OK=1
-  hosts_markers_valid /etc/hosts || HOSTS_MARKERS_OK=0
   inspect_dotfiles
   PACKAGE_STATUS_READY=1
   log_event "Package status ($PKG_MANAGER): shell=${SHELL_INSTALLED[*]} utilities=${UTIL_INSTALLED[*]} apt-unavailable=${APT_UNAVAILABLE[*]:-none}"
@@ -769,8 +761,7 @@ collect_plan_blockers() {
   local name
   local -a unavailable=() changed=()
   (( DOTS_SELECTED[DOT_REPO] || DOTS_SELECTED[DOT_ZSH] )) && require_tool git 'The dotfiles repo and Zsh plugins'
-  (( DOTS_SELECTED[DOT_STANDALONE] || SYS_SELECTED[SYS_HOSTS] )) \
-    && require_tool curl 'Config downloads and the hosts update'
+  (( DOTS_SELECTED[DOT_STANDALONE] )) && require_tool curl 'Config downloads'
   (( SYS_SELECTED[SYS_LOGIN] )) && require_tool zsh 'Zsh as the login shell'
 
   if (( DOTS_SELECTED[DOT_REPO] )); then
@@ -792,9 +783,6 @@ collect_plan_blockers() {
   fi
   if (( DOTS_SELECTED[DOT_STANDALONE] )) && { (( DOTS_SELECTED[DOT_REPO] )) || [[ "$DOT_STATE" == bare ]]; }; then
     PLAN_BLOCKERS+=("'App configs only' would overwrite Neovim and Fastfetch files tracked by the bare repo. Use it only on machines without $DOTFILES_DIR.")
-  fi
-  if (( SYS_SELECTED[SYS_HOSTS] && ! HOSTS_MARKERS_OK )); then
-    PLAN_BLOCKERS+=('The managed block markers in /etc/hosts are nested, repeated or out of order. Fix them by hand first.')
   fi
   for name in "${APT_UNAVAILABLE[@]}"; do pkg_selected "$name" && unavailable+=("$name"); done
   if ((${#unavailable[@]})); then
@@ -855,7 +843,6 @@ plan_group_notes() { # group index -> PLAN_NOTES array
         else PLAN_NOTES+=("login shell ${LOGIN_SHELL_NOW:-unknown} $G_RUN $shell; log out and back in afterwards")
         fi
       fi
-      (( SYS_SELECTED[SYS_HOSTS] )) && PLAN_NOTES+=("replace the managed block from the Gist; backup /etc/hosts.bak.$BACKUP_STAMP")
       if phase_enabled 7; then
         local images='keep custom images' logo='image logo'
         (( SYS_SELECTED[SYS_FF_IMAGES] )) || images='remove custom images'
@@ -1921,43 +1908,6 @@ apply_fastfetch_preferences() {
   run write_fastfetch_prefs "$keep" "$ascii" || { error "Could not save $FASTFETCH_PREFS."; return 1; }
   tilde "$FASTFETCH_PREFS"
   success "Fastfetch preferences saved in $TILDE (images: $keep, built-in logo: $ascii)."
-}
-
-# ── 8. Hosts file ───────────────────────────────────────────────────────────
-
-hosts_markers_valid() { # file -> success when the managed markers are absent or well formed
-  awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
-    $0 == start { if (inside || starts++) bad=1; inside=1; next }
-    $0 == end { if (!inside || ends++) bad=1; inside=0; next }
-    END { if (inside || starts != ends || bad) exit 1 }
-  ' "$1"
-}
-
-update_hosts_block() {
-  local downloaded="$TEMP_DIR/hosts.gist" base="$TEMP_DIR/hosts.base" candidate="$TEMP_DIR/hosts.new" backup entries
-  if ! command -v curl >/dev/null 2>&1; then
-    (( DRY_RUN )) || { error 'curl is not installed.'; return 1; }
-    warn 'curl is not installed (dry run continues); the hosts list would be downloaded from the Gist.'
-    return 0
-  fi
-  info 'Downloading the hosts list from the Gist'
-  download_to "$HOSTS_GIST_URL" "$downloaded" || { error 'The download failed; /etc/hosts was not changed.'; return 1; }
-  hosts_markers_valid /etc/hosts \
-    || { error 'The managed markers in /etc/hosts are nested, repeated or out of order; /etc/hosts was not changed.'; return 1; }
-  awk -v start="$HOSTS_BLOCK_START" -v end="$HOSTS_BLOCK_END" '
-    $0 == start { inside=1; next }
-    $0 == end { inside=0; next }
-    !inside { if (NF == 0) { blanks++; next } while (blanks-- > 0) print ""; blanks=0; print }
-  ' /etc/hosts > "$base" || return 1
-  awk 'NF && $1 !~ /^#/ && $1 != "127.0.0.1" && $1 != "::1" && $1 != "localhost" { print }' "$downloaded" > "$TEMP_DIR/hosts.entries" || return 1
-  entries=$(wc -l < "$TEMP_DIR/hosts.entries")
-  { cat "$base"; printf '\n%s\n' "$HOSTS_BLOCK_START"; cat "$TEMP_DIR/hosts.entries"; printf '%s\n' "$HOSTS_BLOCK_END"; } > "$candidate" || return 1
-  if cmp -s "$candidate" /etc/hosts; then success "The managed hosts block is already current ($entries entries)."; return 0; fi
-  backup="/etc/hosts.bak.$BACKUP_STAMP"
-  info "Backing up /etc/hosts to $backup"
-  as_root cp -a /etc/hosts "$backup" || return 1
-  as_root install -m 0644 "$candidate" /etc/hosts || return 1
-  success "Managed hosts block updated ($entries entries)."
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

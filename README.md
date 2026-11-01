@@ -1,6 +1,6 @@
 # Dotfiles
 
-This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys the dotfiles (including the Starship configuration), syncs Zsh plugins, applies Fastfetch preferences, and can set Zsh as the login shell and update the managed hosts block.
+This repository manages my home-directory configuration with a Git bare repository. The setup script installs shell tools, deploys the dotfiles (including the Starship configuration), syncs Zsh plugins, applies Fastfetch preferences, and can set Zsh as the login shell.
 
 ## Quick setup
 
@@ -24,14 +24,14 @@ The script is a full-screen wizard built on [InstallScriptTemplate](https://gith
 
 1. **Packages:** Zsh, Starship, fzf, eza, Fastfetch and Neovim; Git, curl, 7zip, unzip, iproute2 and the Fira Code font.
 2. **Dotfiles:** the bare repository, Zsh plugins, backing up conflicting files, and standalone app configs.
-3. **System and Fastfetch:** a full system update, Zsh as the login shell, the hosts block, and the Fastfetch image choices.
+3. **System and Fastfetch:** a full system update, Zsh as the login shell, and the Fastfetch image choices.
 4. **Review selections:** every item with its status, where single items can be switched on or off.
 5. **Review the plan:** what will run. Anything that would make the run fail is shown as a blocker, and the run cannot start until it is fixed.
 6. **Authenticate**, then each step runs with its output on screen, followed by a summary and the full log.
 
 Keys: ↑↓ move, Space toggles, Enter goes on, B goes back, Esc quits. On the install screen, Ctrl+C stops after the current step.
 
-The defaults match a plain run: every package, the bare repository, Zsh plugins and the Zsh login shell are selected; the hosts block and the system update are not.
+The defaults match a plain run: every package, the bare repository, Zsh plugins and the Zsh login shell are selected; the system update is not.
 
 ## Command-line options
 
@@ -40,7 +40,7 @@ Selection options choose exactly what runs and open the wizard at the review scr
 ```text
 -p, --packages     Shell tools, utilities, and the Fira Code font
 -d, --dotfiles     Bare dotfiles repo (~/dotfiles) and Zsh plugins
--s, --system       Zsh as the login shell and the managed /etc/hosts block
+-s, --system       Zsh as the login shell
 -u, --update       Full system update before packages are installed
 -A, --all          -p, -d and -s (add -u for a system update)
 -n, --dry-run      Show every command that would change the system, change nothing
@@ -93,10 +93,6 @@ The choices are saved in `~/.config/dotfiles-setup/fastfetch.conf` and become th
 ## Standalone app configs
 
 **App configs only** downloads just the Neovim, Fastfetch and Starship configs, for machines that do not use the bare repository. It cannot be combined with the bare repository, since it would overwrite files the repository tracks. Existing files are backed up under ~/.dotfiles-backup first.
-
-## Hosts block
-
-The hosts step downloads the list from the Gist, backs up /etc/hosts to /etc/hosts.bak.&lt;timestamp&gt;, and replaces only the block between the `# >>> gkuba custom hosts >>>` markers, preserving every other entry. It does nothing when the block is already current, and it refuses to run if the markers are nested, repeated or out of order.
 
 ## Logs
 
