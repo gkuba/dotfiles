@@ -6,7 +6,15 @@
 [[ $- != *i* ]] && return
 
 # ─────────────────────────────────────────────
-# Fastfetch on terminal startup
+# Source common shell files
+# ─────────────────────────────────────────────
+[[ -f ~/.shell_colors ]] && source ~/.shell_colors
+[[ -f ~/.shell_environment ]] && source ~/.shell_environment
+[[ -f ~/.shell_functions ]] && source ~/.shell_functions
+[[ -f ~/.shell_aliases ]] && source ~/.shell_aliases
+
+# ─────────────────────────────────────────────
+# Fastfetch on terminal startup (after .shell_functions: it wraps old fastfetch)
 # ─────────────────────────────────────────────
 if command -v fastfetch >/dev/null 2>&1; then
     # Hyprland gets its own layout (WM row, no logo top padding)
@@ -16,14 +24,6 @@ if command -v fastfetch >/dev/null 2>&1; then
         fastfetch
     fi
 fi
-
-# ─────────────────────────────────────────────
-# Source common shell files
-# ─────────────────────────────────────────────
-[[ -f ~/.shell_colors ]] && source ~/.shell_colors
-[[ -f ~/.shell_environment ]] && source ~/.shell_environment
-[[ -f ~/.shell_functions ]] && source ~/.shell_functions
-[[ -f ~/.shell_aliases ]] && source ~/.shell_aliases
 
 # ─────────────────────────────────────────────
 # Zsh Options (converted from your old shopt settings)

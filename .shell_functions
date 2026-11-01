@@ -231,3 +231,38 @@ paru() {
             /usr/bin/paru --color always "$@" ;;
     esac
 }
+
+# Fastfetch older than 2.70 (Debian 13 ships 2.40.4) rejects hex colors, logo.cache and useOutput.
+# On those versions, run a cached copy of the config with ANSI color codes and the newer keys removed.
+fastfetch() {
+    local ver cfg="$HOME/.config/fastfetch/config.jsonc" compat a want_cfg=0
+    local -a args=()
+    ver=$(command fastfetch --version 2>/dev/null | awk '{print $2}')
+    if [[ -z "$ver" || "$(printf '%s\n2.70.0\n' "$ver" | sort -V | head -1)" == "2.70.0" ]]; then
+        command fastfetch "$@"
+        return
+    fi
+    for a in "$@"; do
+        if (( want_cfg )); then cfg=$a; want_cfg=0; continue; fi
+        case "$a" in
+            -c|--config) want_cfg=1 ;;
+            *) args+=("$a") ;;
+        esac
+    done
+    if [[ ! -f "$cfg" ]]; then
+        command fastfetch "$@"
+        return
+    fi
+    compat="${XDG_CACHE_HOME:-$HOME/.cache}/fastfetch-compat/${cfg##*/}"
+    if [[ ! -f "$compat" || "$cfg" -nt "$compat" ]]; then
+        mkdir -p "${compat%/*}"
+        perl -0777 -pe '
+            s/"#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})"/sprintf(q{"38;2;%d;%d;%d"}, hex $1, hex $2, hex $3)/ge;
+            s/,\s*\n\s*"cache":\s*"[^"]*"\s*\n/\n/g;
+            s/^\s*"cache":[^\n]*\n//mg;
+            s/"useOutput":\s*"stderr"/"useStdErr": true/g;
+            s/^\s*"useOutput":[^\n]*\n//mg;
+        ' "$cfg" > "$compat"
+    fi
+    command fastfetch -c "$compat" "${args[@]}"
+}

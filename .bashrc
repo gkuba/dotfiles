@@ -1,9 +1,6 @@
 ## If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-# Run fastfetch on interactive terminal startup
-fastfetch
-
 ##-------------------------------------------------------------
 ## Some Settings
 ##-------------------------------------------------------------
@@ -19,6 +16,9 @@ for config_file in .shell_colors .shell_environment .shell_functions .shell_alia
     [[ -f "$HOME/$config_file" ]] && source "$HOME/$config_file"
 done
 unset config_file
+
+# Run fastfetch on interactive terminal startup (after .shell_functions: it wraps old fastfetch)
+fastfetch
 
 ## Enable programmable completion features.
 if ! shopt -oq posix; then
